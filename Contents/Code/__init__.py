@@ -80,12 +80,16 @@ def MainMenu():
 	
 	# Add all channels
 	for channel in CHANNELS:
-		menu.add(DirectoryObject(key = Callback(Shows, 
-												title = channel["title"], 
-												url = channel["url"], 
-												thumb = channel["thumb"]), 
-								 title = channel["title"], 
-								 thumb = channel["thumb"])
+		menu.add(
+			DirectoryObject(
+				key = Callback(
+						Shows, 
+						title = channel["title"], 
+						url = channel["url"], 
+						thumb = channel["thumb"]), 
+				title = channel["title"], 
+				thumb = channel["thumb"]
+			)
 		)		
 	
 	# Add preference for video resolution
@@ -112,24 +116,80 @@ def Shows(title, url, thumb):
 
 	sortedShows = sorted(shows, key=lambda show: show["name"])
 	for show in sortedShows:
-		oc.add(DirectoryObject(key = Callback(Videos, 
-											  title = show["name"],
-											  base_url = url, 
-											  url = show["url"], 
-											  thumb = show["img"]), 
-							   title = show["name"], 
-							   thumb = show["img"]))
+		oc.add(
+			DirectoryObject(
+				key = Callback(
+						Choice, 
+						title = show["name"],
+						base_url = url, 
+						url = show["url"], 
+						thumb = show["img"]), 
+				title = show["name"], 
+				thumb = show["img"]
+			)
+		)
 								 
 	return oc
 
 ##########################################################################################
-@route("/video/discovery/Videos", page = int)
-def Videos(title, base_url, url, thumb, page = 0):
-	dir = ObjectContainer(title2 = title)
+@route("/video/discovery/Choice")
+def Choice(title, base_url, url, thumb):
+	oc = ObjectContainer(title1 = title)
 	
 	pageElement = HTML.ElementFromURL(url)
 	serviceURI  = pageElement.xpath("//section[contains(@id, 'all-videos')]//div/@data-service-uri")[0]
-	pageElement = HTML.ElementFromURL(base_url + serviceURI + '?num=' + str(ITEMS_PER_PAGE) + '&page=' + str(page) + '&filter=clip%2Cfullepisode&sort=date&order=desc&feedGroup=video&tpl=dds%2Fmodules%2Fvideo%2Fall_assets_grid.html')
+	pageElement = HTML.ElementFromURL(base_url + serviceURI + '?num=1&page=0&filter=fullepisode')
+	
+	totalFullEpisodes = 0
+	for item in pageElement.xpath("//ul//li/text()"):
+		if 'total' in item:
+			totalFullEpisodes = int(item[item.find("total: ") + 7:])
+			break
+	
+	if totalFullEpisodes > 0:
+		oc.add(
+			DirectoryObject(
+				key = Callback(
+						Videos, 
+						title = title,
+						base_url = base_url, 
+						url = url, 
+						thumb = thumb,
+						episodeReq = True), 
+				title = "Full Episodes", 
+				thumb = thumb
+			)
+		)				
+
+	oc.add(
+		DirectoryObject(
+			key = Callback(
+					Videos, 
+					title = title,
+					base_url = base_url, 
+					url = url, 
+					thumb = thumb,
+					episodeReq = False), 
+			title = "Clips", 
+			thumb = thumb
+		)
+	)
+
+	return oc
+
+##########################################################################################
+@route("/video/discovery/Videos", episodeReq = bool, page = int)
+def Videos(title, base_url, url, thumb, episodeReq, page = 0, ):
+	dir = ObjectContainer(title2 = title)
+	
+	if episodeReq:
+		optionString = "fullepisode"
+	else:
+		optionString = "clip"
+		
+	pageElement = HTML.ElementFromURL(url)
+	serviceURI  = pageElement.xpath("//section[contains(@id, 'all-videos')]//div/@data-service-uri")[0]
+	pageElement = HTML.ElementFromURL(base_url + serviceURI + '?num=' + str(ITEMS_PER_PAGE) + '&page=' + str(page) + '&filter=' + optionString + '&sort=date&order=desc&feedGroup=video&tpl=dds%2Fmodules%2Fvideo%2Fall_assets_grid.html')
 
 	for item in pageElement.xpath("//div[contains(@class, 'item')]"):
 		video         = {}
@@ -169,14 +229,24 @@ def Videos(title, base_url, url, thumb, page = 0):
 			video["date"]     = None
 			video["duration"] = None	
 		
-		dir.add(
-			VideoClipObject(
-        		url = video["url"],
-				title = video['name'],
-        		thumb = video['img'],
-        		originally_available_at = video["date"],
-        		duration = video["duration"])
-        )
+		if episodeReq:
+			dir.add(
+				EpisodeObject(
+					url = video["url"],
+					title = video['name'],
+					thumb = video['img'],
+					originally_available_at = video["date"],
+					duration = video["duration"])
+			)		
+		else:
+			dir.add(
+				VideoClipObject(
+					url = video["url"],
+					title = video['name'],
+					thumb = video['img'],
+					originally_available_at = video["date"],
+					duration = video["duration"])
+        	)
     
 	if len(dir) >= ITEMS_PER_PAGE:
 		for item in pageElement.xpath("//div[contains(@class, 'pagination')]//ul//li"):
@@ -187,6 +257,7 @@ def Videos(title, base_url, url, thumb, page = 0):
 	 							                              base_url = base_url, 
      								                     	  url = url,
        								                     	  thumb = thumb,
+       								                     	  episodeReq = episodeReq,
        		    						                      page = page + 1), 
 						   		   	title = "More ...")
 					)

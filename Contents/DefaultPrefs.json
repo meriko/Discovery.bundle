@@ -1,0 +1,9 @@
+[
+    {
+        "id": "qualitypreference",
+        "type": "enum",
+        "label": "Playback Quality",
+        "values": [ "Automatic", "High (720p)", "Normal (480p)", "Medium (396p)", "Low (270p)"],
+        "default": "High (720p)"
+    }
+]

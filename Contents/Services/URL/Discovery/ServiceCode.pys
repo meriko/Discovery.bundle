@@ -1,0 +1,174 @@
+import re
+
+####################################################################################################
+def NormalizeURL(url):
+	return url
+
+####################################################################################################
+def MetadataObjectForURL(url):
+	pass
+	
+	#http://static.discoverymedia.com/videos/components/dsc/6222a11071685a3f9fa14f65be0e208b97eb0822/clip-data-service.html
+
+####################################################################################################
+def MediaObjectsForURL(url):
+	mediaObjs = []
+
+	try:
+		m            = re.search('(?<=resolution=)[0-9]+', url)
+		preferredRes = m.group(0)
+		url          = url.replace("?resolution=" + preferredRes, "")
+	except:
+		preferredRes = None
+
+	# Add HLS
+	mo = MediaObject(
+		container               = 'mpegts',
+		video_codec             = VideoCodec.H264,
+		audio_codec             = AudioCodec.AAC,                 
+		audio_channels          = 2,
+		optimized_for_streaming = True,
+		parts                   = [PartObject(key = HTTPLiveStreamURL(Callback(PlayHLS, url = url, resolution = preferredRes)))]
+	)
+	
+	mediaObjs.append(mo)
+
+	# Add MP4/FLV
+	mo = MediaObject(audio_channels   = 2,
+                     parts            = [PartObject(key = Callback(PlayFile, 
+                                                                   url = url,
+                                                                   resolution = preferredRes))]
+    )
+	
+	mediaObjs.append(mo)
+	
+	return mediaObjs
+
+####################################################################################################
+def PlayFile(url, resolution):
+	pageContent = HTTP.Request(url).content
+	for line in pageContent.splitlines():
+  		if 'clipRefId' in line:
+  			# Replace with regexp later!
+  			id = line[line.find("clipRefId") + 13 : len(line) - 2]
+  			
+  			# A sample XML
+  			'''
+			<?xml version="1.0"?>
+			<!DOCTYPE smil PUBLIC "-//W3C//DTD SMIL 2.0//EN" "http://www.w3.org/2001/SMIL20/SMIL20.dtd">
+			<smil xmlns="http://www.w3.org/2001/SMIL20/Language">
+				<head>
+					<meta name="reference_id" content="6222a11071685a3f9fa14f65be0e208b97eb0822" />
+					<meta name="httpBase" content="http://discidevflash-f.akamaihd.net" />
+					<meta name="vod" content="true"/>
+				</head>
+				<body>
+					<switch reference_id="6222a11071685a3f9fa14f65be0e208b97eb0822">
+								<video src="digmed/hdnet/a4/fa/13937300301001_PW-BOB_Back-to-Business-3500k.mp4" system-bitrate="3500000"/>
+								<video src="digmed/hdnet/a4/fa/13937300301001_PW-BOB_Back-to-Business-1500k.mp4" system-bitrate="1500000"/>
+								<video src="digmed/hdnet/a4/fa/13937300301001_PW-BOB_Back-to-Business-800k.mp4" system-bitrate="800000"/>
+							</switch>
+				</body>
+			</smil>
+			'''
+  			
+			xmlElement = XML.ElementFromURL("http://static.discoverymedia.com/videos/components/dsc/%s/smil-service.smil" % id)
+
+			for meta in xmlElement.xpath("//*[contains(name(), 'meta')]"):
+				if meta.xpath(".//@name")[0] == "httpBase":
+					base_url = meta.xpath(".//@content")[0]
+					Log(base_url)
+			
+			diff = 1000000000  # Some huge number 
+			for video in xmlElement.xpath("//*[contains(name(), 'video')]"):
+				bitrate = video.xpath(".//@system-bitrate")[0]
+				
+				newDiff = abs(BitrateToResolution(int(bitrate)) - int(resolution))
+				if newDiff < diff:
+					source  = "/" + video.xpath(".//@src")[0]
+					diff    = newDiff
+				
+			return Redirect(base_url + source)
+
+####################################################################################################
+def BitrateToResolution(bitrate):
+	if bitrate >= 3000000:
+		return 720
+	elif bitrate >= 1000000:
+		return 480
+	else:
+		return 360
+
+####################################################################################################
+def PlayHLS(url, resolution):
+	hls_url     = None
+	pageContent = HTTP.Request(url).content
+	for line in pageContent.splitlines():
+  		if 'master.m3u8' in line:
+  			hls_url = line[line.find("http") : line.rfind('"')]
+			Log(hls_url)
+			break
+
+	if resolution:
+		HLSStreams = getHLSStreams(hls_url)
+
+		hlsUrl = hls_url     
+		diff   = 1000000000  # Some huge number
+		for stream in HLSStreams:
+			newDiff = abs(stream["resolution"] - int(resolution))
+			if newDiff < diff:
+				diff   = newDiff
+				hlsUrl = stream["url"]
+
+		newPlaylist = ""  
+		orgPlayList = HTTP.Request(hlsUrl).content
+		path        = hls_url[ : hls_url.find('master.m3u8')]
+		for line in orgPlayList.splitlines():
+			if 'segment' in line:
+				newPlaylist = newPlaylist + path + line + '\n'
+			else:
+				newPlaylist = newPlaylist + line + '\n'   
+				
+		return newPlaylist
+	else:
+		return Redirect(hls_url)
+
+###########################################################
+def getHLSStreams(hlsUrl):
+	streams = []
+	Found   = True  
+
+	try: 
+		pageElement = HTML.ElementFromURL(hlsUrl)
+	except:
+		Found = False
+
+	if Found:
+		streamSpec      = pageElement.xpath("text()")[0]
+		streamSpecLines = streamSpec.splitlines()
+
+		# Parse the m3u8 file to get:
+		# - URL
+		# - Resolution
+		# - Bitrate
+		for line in streamSpecLines:
+			if "BANDWIDTH" in line:
+				bwm = re.search('(?<=BANDWIDTH=)[0-9]+', line)
+
+				stream               = {}
+				stream["bitrate"]    = int(bwm.group(0))        
+
+				if "RESOLUTION" in line:
+					rnm                  = re.search('(?<=RESOLUTION=)[0-9]+x[0-9]+', line)
+					stream["resolution"] = int(rnm.group(0).split("x")[1])
+				else:
+					stream["resolution"] = 0
+
+			elif "index" in line:
+				if stream["resolution"] > 0:
+					stream["url"] = hlsUrl.replace("master.m3u8", line)
+					Log("STREAM: " + stream["url"])
+					streams.append(stream)         
+
+	return streams
+

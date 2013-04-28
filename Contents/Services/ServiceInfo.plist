@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>URL</key>
+	<dict>
+		<key>Discovery</key>
+		<dict>
+			<key>URLPatterns</key>
+			<array>
+				<string>http://dsc.discovery.com/</string>
+				<string>http://animal.discovery.com/</string>
+				<string>http://www.tlc.com/</string>
+				<string>http://investigation.discovery.com/</string>
+				<string>http://science.discovery.com/</string>
+				<string>http://america.discovery.com/</string>
+				<string>http://military.discovery.com/</string>
+				<string>http://velocity.discovery.com/</string>
+			</array>
+		</dict>
+	</dict>
+</dict>
+</plist>

@@ -134,7 +134,7 @@ def Shows(title, url, thumb):
 ##########################################################################################
 @route("/video/discovery/Choice")
 def Choice(title, base_url, url, thumb):
-	oc = ObjectContainer(title1 = title)
+	oc = ObjectContainer(title2 = title)
 	
 	pageElement = HTML.ElementFromURL(url)
 	
@@ -195,53 +195,31 @@ def Videos(title, base_url, url, thumb, episodeReq, page = 0, ):
 		
 	pageElement = HTML.ElementFromURL(url)
 	serviceURI  = pageElement.xpath("//section[contains(@id, 'all-videos')]//div/@data-service-uri")[0]
-	pageElement = HTML.ElementFromURL(base_url + serviceURI + '?num=' + str(ITEMS_PER_PAGE) + '&page=' + str(page) + '&filter=' + optionString + '&sort=date&order=desc&feedGroup=video&tpl=dds%2Fmodules%2Fvideo%2Fall_assets_grid.html')
+	pageElement = HTML.ElementFromURL(base_url + serviceURI + '?num=' + str(ITEMS_PER_PAGE) + '&page=' + str(page) + '&filter=' + optionString + '&sort=date&order=desc&feedGroup=video&tpl=dds%2Fmodules%2Fvideo%2Fall_assets_list.html')
 
-	for item in pageElement.xpath("//div[contains(@class, 'item')]"):
-		video         = {}
-		video["url"]  = base_url + item.xpath(".//a/@href")[0]
-		video["img"]  = item.xpath(".//img/@src")[0]
-		video["name"] = item.xpath(".//h4//a/text()")[0]
-
-		video["date"]     = None
-		video["duration"] = None
-		video["summary"]  = None
-
-		try:	
-			detailsPageElement = HTML.ElementFromURL(base_url + serviceURI + '?num=' + str(ITEMS_PER_PAGE) + '&page=' + str(page) + '&filter=clip%2Cfullepisode&sort=date&order=desc&feedGroup=video')
-			collectData = False
-			for detailItem in detailsPageElement.xpath("//ul//li/text()"):
-				if 'title' in detailItem and video["name"].lower() in detailItem.lower():
-					collectData = True
-					Log(video["name"])
+	for item in pageElement.xpath("//tr"):
+		test = item.xpath(".//td")
+		if len(test) < 1:
+			continue
 			
-				if 'date:' in detailItem and collectData:
-					dateString = detailItem[detailItem.find("date: ") + 6:]
-					video["date"] = Datetime.ParseDate(dateString).date()
-					Log(video["date"])
-				
-				if 'duration raw:' in detailItem and collectData:
-					video["duration"] = int(detailItem[detailItem.find("duration raw: ") + 14:]) * 1000
-					Log(str(video["duration"]))
-					break
-					
-			'''	The below takes too long time!		
-			pageContent = HTTP.Request(video["url"]).content
-			for line in pageContent.splitlines():
-  				if 'clipRefId' in line:
-  					# Replace with regexp later!
-  					id = line[line.find("clipRefId") + 13 : len(line) - 2]
-  					
-  					if id:
-  						videoInfo = JSON.ObjectFromURL('http://static.discoverymedia.com/videos/components/dsc/' + id + '/clip-data-service.html')
-  			
-  						video["duration"] = videoInfo['duration']
-  						video["summary"]  = videoInfo['videoCaption']
-  						video["date"]     = Datetime.ParseDate(videoInfo['datePosted']).date()
-					break
-			'''			
-  		except:
-			pass
+		video             = {}
+		video["url"]      = base_url + item.xpath(".//a/@href")[0]
+		video["img"]      = item.xpath(".//a//img/@src")[0]
+		video["name"]     = item.xpath(".//h4//a/text()")[0]
+		video["summary"]  = item.xpath(".//p/text()")[0]
+		video["show"]     = item.xpath(".//h5/text()")[0]
+		
+		try:
+			video["date"] = Datetime.ParseDate(item.xpath(".//div[contains(@class, 'date')]/text()")[0]).date()
+		except:
+			video["date"] = None
+			
+		try:
+			length             = item.xpath(".//div[contains(@class, 'length')]/text()")[0]
+			(minutes, seconds) = length.split(":")
+			video["duration"]  = (int(minutes) * 60 + int(seconds)) * 1000
+		except:
+			video["duration"] = None
 		
 		if Prefs['qualitypreference'] == "Automatic":
 			pass
@@ -258,7 +236,8 @@ def Videos(title, base_url, url, thumb, episodeReq, page = 0, ):
 			EpisodeObject(
 				url = video["url"],
 				title = video["name"],
-				#summary = video["summary"],
+				show = video["show"],
+				summary = video["summary"],
 				thumb = video["img"],
 				originally_available_at = video["date"],
 				duration = video["duration"])

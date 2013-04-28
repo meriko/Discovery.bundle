@@ -6,9 +6,25 @@ def NormalizeURL(url):
 
 ####################################################################################################
 def MetadataObjectForURL(url):
-	pass
-	
-	#http://static.discoverymedia.com/videos/components/dsc/6222a11071685a3f9fa14f65be0e208b97eb0822/clip-data-service.html
+	try:
+		m            = re.search('(?<=resolution=)[0-9]+', url)
+		preferredRes = m.group(0)
+		url          = url.replace("?resolution=" + preferredRes, "")
+	except:
+		pass
+
+	id = FindShowId(url)
+	if id:
+  		video = JSON.ObjectFromURL('http://static.discoverymedia.com/videos/components/dsc/' + id + '/clip-data-service.html')
+  			
+		return EpisodeObject(
+			title = video['episodeTitle'],
+			summary = video['videoCaption'],
+			duration = video['duration'],
+			thumb = video['thumbnailURL'],
+			art = video['videoStill'],
+			originally_available_at = Datetime.ParseDate(video['datePosted']).date()
+		)
 
 ####################################################################################################
 def MediaObjectsForURL(url):
@@ -49,49 +65,56 @@ def PlayFile(url, resolution):
 	if not resolution:
 		resolution = "720"
 		
+	id = FindShowId(url)
+	if id:
+  		# A sample XML
+  		'''
+		<?xml version="1.0"?>
+		<!DOCTYPE smil PUBLIC "-//W3C//DTD SMIL 2.0//EN" "http://www.w3.org/2001/SMIL20/SMIL20.dtd">
+		<smil xmlns="http://www.w3.org/2001/SMIL20/Language">
+			<head>
+				<meta name="reference_id" content="6222a11071685a3f9fa14f65be0e208b97eb0822" />
+				<meta name="httpBase" content="http://discidevflash-f.akamaihd.net" />
+				<meta name="vod" content="true"/>
+			</head>
+			<body>
+				<switch reference_id="6222a11071685a3f9fa14f65be0e208b97eb0822">
+							<video src="digmed/hdnet/a4/fa/13937300301001_PW-BOB_Back-to-Business-3500k.mp4" system-bitrate="3500000"/>
+							<video src="digmed/hdnet/a4/fa/13937300301001_PW-BOB_Back-to-Business-1500k.mp4" system-bitrate="1500000"/>
+							<video src="digmed/hdnet/a4/fa/13937300301001_PW-BOB_Back-to-Business-800k.mp4" system-bitrate="800000"/>
+						</switch>
+			</body>
+		</smil>
+		'''
+  			
+		xmlElement = XML.ElementFromURL("http://static.discoverymedia.com/videos/components/dsc/%s/smil-service.smil" % id)
+
+		for meta in xmlElement.xpath("//*[contains(name(), 'meta')]"):
+			if meta.xpath(".//@name")[0] == "httpBase":
+				base_url = meta.xpath(".//@content")[0]
+				break
+			
+		diff = 1000000000  # Some huge number 
+		for video in xmlElement.xpath("//*[contains(name(), 'video')]"):
+			bitrate = video.xpath(".//@system-bitrate")[0]
+				
+			newDiff = abs(BitrateToResolution(int(bitrate)) - int(resolution))
+			if newDiff < diff:
+				source  = "/" + video.xpath(".//@src")[0]
+				diff    = newDiff
+				
+		return Redirect(base_url + source)
+
+####################################################################################################
+def FindShowId(url):
 	pageContent = HTTP.Request(url).content
 	for line in pageContent.splitlines():
   		if 'clipRefId' in line:
   			# Replace with regexp later!
   			id = line[line.find("clipRefId") + 13 : len(line) - 2]
-  			
-  			# A sample XML
-  			'''
-			<?xml version="1.0"?>
-			<!DOCTYPE smil PUBLIC "-//W3C//DTD SMIL 2.0//EN" "http://www.w3.org/2001/SMIL20/SMIL20.dtd">
-			<smil xmlns="http://www.w3.org/2001/SMIL20/Language">
-				<head>
-					<meta name="reference_id" content="6222a11071685a3f9fa14f65be0e208b97eb0822" />
-					<meta name="httpBase" content="http://discidevflash-f.akamaihd.net" />
-					<meta name="vod" content="true"/>
-				</head>
-				<body>
-					<switch reference_id="6222a11071685a3f9fa14f65be0e208b97eb0822">
-								<video src="digmed/hdnet/a4/fa/13937300301001_PW-BOB_Back-to-Business-3500k.mp4" system-bitrate="3500000"/>
-								<video src="digmed/hdnet/a4/fa/13937300301001_PW-BOB_Back-to-Business-1500k.mp4" system-bitrate="1500000"/>
-								<video src="digmed/hdnet/a4/fa/13937300301001_PW-BOB_Back-to-Business-800k.mp4" system-bitrate="800000"/>
-							</switch>
-				</body>
-			</smil>
-			'''
-  			
-			xmlElement = XML.ElementFromURL("http://static.discoverymedia.com/videos/components/dsc/%s/smil-service.smil" % id)
-
-			for meta in xmlElement.xpath("//*[contains(name(), 'meta')]"):
-				if meta.xpath(".//@name")[0] == "httpBase":
-					base_url = meta.xpath(".//@content")[0]
-					Log(base_url)
-			
-			diff = 1000000000  # Some huge number 
-			for video in xmlElement.xpath("//*[contains(name(), 'video')]"):
-				bitrate = video.xpath(".//@system-bitrate")[0]
-				
-				newDiff = abs(BitrateToResolution(int(bitrate)) - int(resolution))
-				if newDiff < diff:
-					source  = "/" + video.xpath(".//@src")[0]
-					diff    = newDiff
-				
-			return Redirect(base_url + source)
+  			Log(id)
+  			return id
+  	return None
 
 ####################################################################################################
 def BitrateToResolution(bitrate):

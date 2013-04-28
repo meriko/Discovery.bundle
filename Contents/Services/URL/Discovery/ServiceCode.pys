@@ -34,10 +34,10 @@ def MediaObjectsForURL(url):
 	mediaObjs.append(mo)
 
 	# Add MP4/FLV
-	mo = MediaObject(audio_channels   = 2,
-                     parts            = [PartObject(key = Callback(PlayFile, 
-                                                                   url = url,
-                                                                   resolution = preferredRes))]
+	mo = MediaObject(
+		audio_channels          = 2,
+		optimized_for_streaming = True,
+		parts                   = [PartObject(key = Callback(PlayFile, url = url, resolution = preferredRes))]
     )
 	
 	mediaObjs.append(mo)
@@ -46,6 +46,9 @@ def MediaObjectsForURL(url):
 
 ####################################################################################################
 def PlayFile(url, resolution):
+	if not resolution:
+		resolution = "720"
+		
 	pageContent = HTTP.Request(url).content
 	for line in pageContent.splitlines():
   		if 'clipRefId' in line:

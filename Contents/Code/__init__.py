@@ -137,7 +137,13 @@ def Choice(title, base_url, url, thumb):
 	oc = ObjectContainer(title1 = title)
 	
 	pageElement = HTML.ElementFromURL(url)
-	serviceURI  = pageElement.xpath("//section[contains(@id, 'all-videos')]//div/@data-service-uri")[0]
+	
+	try:
+		serviceURI = pageElement.xpath("//section[contains(@id, 'all-videos')]//div/@data-service-uri")[0]
+	except:
+		Log.Error("Show without valid service url: " + title)
+		return ObjectContainer(header="Sorry", message="A problem occured when retrieving data for this show.")
+	
 	pageElement = HTML.ElementFromURL(base_url + serviceURI + '?num=1&page=0&filter=fullepisode')
 	
 	totalFullEpisodes = 0

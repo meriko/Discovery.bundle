@@ -1,4 +1,6 @@
 import re
+import string
+import random
 
 ####################################################################################################
 def NormalizeURL(url):
@@ -102,6 +104,11 @@ def PlayFile(url, resolution):
 			if newDiff < diff:
 				source  = "/" + video.xpath(".//@src")[0]
 				diff    = newDiff
+		
+		if 'flv' in source:
+			random_1 = ''.join(random.choice(string.ascii_uppercase) for x in range(5))
+			random_2 = ''.join(random.choice(string.ascii_uppercase) for x in range(12))
+			source   = source + '?v=2.11.3&fp=MAC%2011,6,602,180&r=' + random_1 + '&g=' + random_2
 				
 		return Redirect(base_url + source)
 

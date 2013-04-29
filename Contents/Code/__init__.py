@@ -59,10 +59,11 @@ CHANNELS.append(CHANNEL)
 ##########################################################################################
 def Start():
 	Plugin.AddViewGroup("List", viewMode="List", mediaType="items")
+	Plugin.AddViewGroup("InfoList", viewMode="InfoList", mediaType="items")
 
 	# Setup the default attributes for the ObjectContainer
 	ObjectContainer.title1 = TITLE
-	ObjectContainer.view_group = 'List'
+	ObjectContainer.view_group = "List"
 	ObjectContainer.art = R(ART)
 
 	# Setup the default attributes for the other objects
@@ -187,6 +188,7 @@ def Choice(title, base_url, url, thumb):
 @route("/video/discovery/Videos", episodeReq = bool, page = int)
 def Videos(title, base_url, url, thumb, episodeReq, page = 0, ):
 	dir = ObjectContainer(title2 = title)
+	dir.view_group = "InfoList"
 	
 	if episodeReq:
 		optionString = "fullepisode"

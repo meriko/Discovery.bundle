@@ -6,8 +6,6 @@ ICON  = 'icon-default.png'
 
 ITEMS_PER_PAGE = 50
 
-EXCLUDED_SHOWS = ['Curiosity', 'Battleground Rhino Wars', 'Catfishin Kings']
-
 CHANNELS = []
 
 CHANNEL          = {}
@@ -137,7 +135,6 @@ def ShowsChoice(title, url, thumb):
 @route("/video/discovery/Shows", fullEpisodesOnly = bool)
 def Shows(title, url, thumb, fullEpisodesOnly):
 	oc = ObjectContainer(title1 = title)
-	oc.view_group = "InfoList"
 	
 	# Add shows by parsing the site
 	shows       = []
@@ -343,7 +340,6 @@ def Videos(title, base_url, url, serviceURI, thumb, episodeReq, page = 0, ):
 
 ##########################################################################################
 def ExtractNameFromURL(url):
-	Log("----> " + url)
 	if url.endswith("/"):
 		url = url[:-1]
 	url = url[url.rfind("/") + 1:]

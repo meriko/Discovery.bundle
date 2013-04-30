@@ -6,6 +6,8 @@ ICON  = 'icon-default.png'
 
 ITEMS_PER_PAGE = 50
 
+EXCLUDED_SHOWS = ['Curiosity', 'Battleground Rhino Wars', 'Catfishin Kings']
+
 CHANNELS = []
 
 CHANNEL          = {}
@@ -84,7 +86,7 @@ def MainMenu():
 		menu.add(
 			DirectoryObject(
 				key = Callback(
-						Shows, 
+						ShowsChoice, 
 						title = channel["title"], 
 						url = channel["url"], 
 						thumb = channel["thumb"]), 
@@ -99,20 +101,76 @@ def MainMenu():
 	return menu
 
 ##########################################################################################
-@route("/video/discovery/Shows")
-def Shows(title, url, thumb):
+@route("/video/discovery/ShowsChoice")
+def ShowsChoice(title, url, thumb):
 	oc = ObjectContainer(title1 = title)
+	
+	oc.add(
+		DirectoryObject(
+			key = Callback(
+					Shows, 
+					title = title,
+					url = url,
+					thumb = thumb,
+					fullEpisodesOnly = True), 
+			title = "Shows With Full Episodes", 
+			thumb = thumb
+		)
+	)				
+
+	oc.add(
+		DirectoryObject(
+			key = Callback(
+					Shows, 
+					title = title,
+					url = url,
+					thumb = thumb,
+					fullEpisodesOnly = False), 
+			title = "All Shows", 
+			thumb = thumb
+		)
+	)
+	
+	return oc
+	
+##########################################################################################
+@route("/video/discovery/Shows", fullEpisodesOnly = bool)
+def Shows(title, url, thumb, fullEpisodesOnly):
+	oc = ObjectContainer(title1 = title)
+	oc.view_group = "InfoList"
 	
 	# Add shows by parsing the site
 	shows       = []
-	pageElement = HTML.ElementFromURL(url + "/tv-shows")
+	showNames   = []
+	pageElement = HTML.ElementFromURL(url + "/videos")
 	for item in pageElement.xpath("//div[contains(@class, 'show-badge')]"):
-		show         = {}
-		show["url"]  = url + item.xpath(".//a/@href")[0]
-		show["name"] = ExtractNameFromURL(show["url"])
-		show["img"]  = item.xpath(".//img/@src")[0]
+		containsFullEpisodes = "full-episodes" in item.xpath(".//a/@data-module-name")[0] 
 		
-		if not show in shows:
+		if fullEpisodesOnly and not containsFullEpisodes:
+			continue
+
+		showUrl = item.xpath(".//a/@href")[0]
+		
+		if not showUrl:
+			continue
+		
+		if not 'tv-shows/' in showUrl:
+			continue
+
+		show    = {}
+		
+		if showUrl.startswith("http"):
+			show["url"] = showUrl
+		else:
+			if not showUrl.startswith("/"):
+				showUrl = "/" + showUrl
+			show["url"] = url + showUrl
+
+		show["img"]  = item.xpath(".//img/@src")[0]
+		show["name"] = ExtractNameFromURL(show["url"])
+		
+		if not show["name"] in showNames:
+			showNames.append(show["name"])
 			shows.append(show)
 
 	sortedShows = sorted(shows, key=lambda show: show["name"])
@@ -120,33 +178,47 @@ def Shows(title, url, thumb):
 		oc.add(
 			DirectoryObject(
 				key = Callback(
-						Choice, 
+						VideosChoice, 
 						title = show["name"],
 						base_url = url, 
 						url = show["url"], 
 						thumb = show["img"]), 
-				title = show["name"], 
+				title = show["name"],
 				thumb = show["img"]
 			)
 		)
-								 
-	return oc
+	
+	if len(oc) < 1:
+		return ObjectContainer(header="Sorry", message="No shows found.")
+	else:						 
+		return oc
 
 ##########################################################################################
-@route("/video/discovery/Choice")
-def Choice(title, base_url, url, thumb):
+@route("/video/discovery/VideosChoice")
+def VideosChoice(title, base_url, url, thumb):
 	oc = ObjectContainer(title2 = title)
 	
 	pageElement = HTML.ElementFromURL(url)
 	
 	try:
-		serviceURI = pageElement.xpath("//section[contains(@id, 'all-videos')]//div/@data-service-uri")[0]
+		serviceURI  = pageElement.xpath("//section[contains(@id, 'all-videos')]//div/@data-service-uri")[0]
+		pageElement = HTML.ElementFromURL(base_url + serviceURI + '?num=1&page=0&filter=fullepisode')
 	except:
-		Log.Error("Show without valid service url: " + title)
-		return ObjectContainer(header="Sorry", message="A problem occured when retrieving data for this show.")
-	
-	pageElement = HTML.ElementFromURL(base_url + serviceURI + '?num=1&page=0&filter=fullepisode')
-	
+		try:
+			# The serviceURI couldn't be retrieved
+			# Known shows with this error:
+			# - Backyard Oil
+			# - Overhaulin when viewed from Discovery Channel(this is in fact a show in Velocity)
+			serviceURI  = "/services/taxonomy/" + title.replace(" ", "+")
+			
+			if 'Overhaulin' in title:
+				serviceURI = serviceURI + "'/"
+				
+			pageElement = HTML.ElementFromURL(base_url + serviceURI + '?num=1&page=0&filter=fullepisode')
+		except:
+			Log.Warn("Show without valid service url or no videos yet: " + title)
+			return ObjectContainer(header="Sorry", message="No videos found.")
+
 	totalFullEpisodes = 0
 	for item in pageElement.xpath("//ul//li/text()"):
 		if 'total' in item:
@@ -160,7 +232,8 @@ def Choice(title, base_url, url, thumb):
 						Videos, 
 						title = title,
 						base_url = base_url, 
-						url = url, 
+						url = url,
+						serviceURI = serviceURI, 
 						thumb = thumb,
 						episodeReq = True), 
 				title = "Full Episodes", 
@@ -174,7 +247,8 @@ def Choice(title, base_url, url, thumb):
 					Videos, 
 					title = title,
 					base_url = base_url, 
-					url = url, 
+					url = url,
+					serviceURI = serviceURI,
 					thumb = thumb,
 					episodeReq = False), 
 			title = "Clips", 
@@ -186,7 +260,7 @@ def Choice(title, base_url, url, thumb):
 
 ##########################################################################################
 @route("/video/discovery/Videos", episodeReq = bool, page = int)
-def Videos(title, base_url, url, thumb, episodeReq, page = 0, ):
+def Videos(title, base_url, url, serviceURI, thumb, episodeReq, page = 0, ):
 	dir = ObjectContainer(title2 = title)
 	dir.view_group = "InfoList"
 	
@@ -195,8 +269,6 @@ def Videos(title, base_url, url, thumb, episodeReq, page = 0, ):
 	else:
 		optionString = "clip"
 		
-	pageElement = HTML.ElementFromURL(url)
-	serviceURI  = pageElement.xpath("//section[contains(@id, 'all-videos')]//div/@data-service-uri")[0]
 	pageElement = HTML.ElementFromURL(base_url + serviceURI + '?num=' + str(ITEMS_PER_PAGE) + '&page=' + str(page) + '&filter=' + optionString + '&sort=date&order=desc&feedGroup=video&tpl=dds%2Fmodules%2Fvideo%2Fall_assets_list.html')
 
 	for item in pageElement.xpath("//tr"):
@@ -204,8 +276,13 @@ def Videos(title, base_url, url, thumb, episodeReq, page = 0, ):
 		if len(test) < 1:
 			continue
 			
-		video             = {}
-		video["url"]      = base_url + item.xpath(".//a/@href")[0]
+		video    = {}
+		videoUrl = item.xpath(".//a/@href")[0]
+		
+		if not videoUrl.startswith("http"):
+			videoUrl = base_url + videoUrl
+			
+		video["url"]      = videoUrl
 		video["img"]      = item.xpath(".//a//img/@src")[0]
 		video["name"]     = item.xpath(".//h4//a/text()")[0]
 		video["summary"]  = item.xpath(".//p/text()")[0]
@@ -266,10 +343,12 @@ def Videos(title, base_url, url, thumb, episodeReq, page = 0, ):
 
 ##########################################################################################
 def ExtractNameFromURL(url):
+	Log("----> " + url)
 	if url.endswith("/"):
 		url = url[:-1]
+	url = url[url.rfind("/") + 1:]
 	if ".htm" in url:
 		url = url[:url.find(".htm")]
-	if "/video" in url:
-		url = url[:url.find("/video")]
-	return url[url.rfind("/") + 1 :].replace("-", " ").title()
+	if "-videos" in url:
+		url = url.replace("-videos", "")
+	return url.replace("-", " ").title()

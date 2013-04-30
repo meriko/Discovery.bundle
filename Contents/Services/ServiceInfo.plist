@@ -12,7 +12,7 @@
 				<string>http://animal.discovery.com/</string>
 				<string>http://www.tlc.com/</string>
 				<string>http://investigation.discovery.com/</string>
-				<string>http://science.discovery.com/</string>
+				<string>http://sci(ence)*.discovery.com/</string>
 				<string>http://america.discovery.com/</string>
 				<string>http://military.discovery.com/</string>
 				<string>http://velocity.discovery.com/</string>

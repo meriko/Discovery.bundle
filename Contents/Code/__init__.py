@@ -8,50 +8,58 @@ ITEMS_PER_PAGE = 50
 
 CHANNELS = []
 
-CHANNEL          = {}
-CHANNEL["title"] = 'Discovery Channel'
-CHANNEL["url"]   = 'http://dsc.discovery.com'
-CHANNEL["thumb"] = 'http://static.ddmcdn.com/en-us/dsc//images/default-still.jpg'
+CHANNEL           = {}
+CHANNEL["title"]  = 'Discovery Channel'
+CHANNEL["id"]     = 'Discovery'
+CHANNEL["url"]    = 'http://dsc.discovery.com'
+CHANNEL["thumb"]  = 'http://static.ddmcdn.com/en-us/dsc//images/default-still.jpg'
 CHANNELS.append(CHANNEL)
 
 CHANNEL          = {}
 CHANNEL["title"] = 'Animal Planet'
+CHANNEL["id"]    = 'apl'
 CHANNEL["url"]   = 'http://animal.discovery.com'
 CHANNEL["thumb"] = 'http://static.ddmcdn.com/en-us/apl//images/default-still.jpg'
 CHANNELS.append(CHANNEL)
 
 CHANNEL          = {}
 CHANNEL["title"] = 'TLC'
+CHANNEL["id"]    = 'tlc'
 CHANNEL["url"]   = 'http://www.tlc.com'
 CHANNEL["thumb"] = 'http://static.ddmcdn.com/en-us/tlc//images/default-still.jpg'
 CHANNELS.append(CHANNEL)
 
 CHANNEL          = {}
 CHANNEL["title"] = 'Investigation'
+CHANNEL["id"]    = 'investigation+discovery'
 CHANNEL["url"]   = 'http://investigation.discovery.com'
 CHANNEL["thumb"] = 'http://static.ddmcdn.com/en-us/ids//images/default-still.jpg'
 CHANNELS.append(CHANNEL)
 
 CHANNEL          = {}
 CHANNEL["title"] = 'Science'
+CHANNEL["id"]    = 'science'
 CHANNEL["url"]   = 'http://science.discovery.com'
 CHANNEL["thumb"] = 'http://static.ddmcdn.com/en-us/sci//images/default-still.jpg'
 CHANNELS.append(CHANNEL)
 
 CHANNEL          = {}
 CHANNEL["title"] = 'Destination America'
+CHANNEL["id"]    = 'dam'
 CHANNEL["url"]   = 'http://america.discovery.com'
 CHANNEL["thumb"] = 'http://static.ddmcdn.com/en-us/dam//images/default-still.jpg'
 CHANNELS.append(CHANNEL)
 
 CHANNEL          = {}
 CHANNEL["title"] = 'Military Channel'
+CHANNEL["id"]    = 'military'
 CHANNEL["url"]   = 'http://military.discovery.com'
 CHANNEL["thumb"] = 'http://static.ddmcdn.com/en-us/mil//images/default-still.jpg'
 CHANNELS.append(CHANNEL)
 
 CHANNEL          = {}
 CHANNEL["title"] = 'Velocity'
+CHANNEL["id"]    = 'velocity'
 CHANNEL["url"]   = 'http://velocity.discovery.com'
 CHANNEL["thumb"] = 'http://static.ddmcdn.com/en-us/vel//images/default-still.jpg'
 CHANNELS.append(CHANNEL)
@@ -87,7 +95,8 @@ def MainMenu():
 				key = Callback(
 						ShowsChoice, 
 						title = channel["title"], 
-						url = channel["url"], 
+						url = channel["url"],
+						id = channel["id"],
 						thumb = channel["thumb"]), 
 				title = channel["title"], 
 				thumb = channel["thumb"]
@@ -101,34 +110,51 @@ def MainMenu():
 
 ##########################################################################################
 @route("/video/discovery/ShowsChoice")
-def ShowsChoice(title, url, thumb):
+def ShowsChoice(title, url, id, thumb):
 	oc = ObjectContainer(title1 = title)
 	
-	oc.add(
-		DirectoryObject(
-			key = Callback(
-					Shows, 
-					title = title,
-					url = url,
-					thumb = thumb,
-					fullEpisodesOnly = True), 
-			title = "Shows With Full Episodes", 
-			thumb = thumb
-		)
-	)				
+	pageElement = HTML.ElementFromURL(url + "/services/taxonomy/" + id + "/?feedGroup=video&filter=fullepisode&num=1")
+	
+	if GetTotalEpisodes(pageElement) > 0:
+		oc.add(
+			DirectoryObject(
+				key = Callback(
+						Shows, 
+						title = title,
+						url = url,
+						thumb = thumb,
+						fullEpisodesOnly = True), 
+				title = "Shows With Full Episodes", 
+				thumb = thumb
+			)
+		)				
 
-	oc.add(
-		DirectoryObject(
-			key = Callback(
-					Shows, 
-					title = title,
-					url = url,
-					thumb = thumb,
-					fullEpisodesOnly = False), 
-			title = "All Shows", 
-			thumb = thumb
+		oc.add(
+			DirectoryObject(
+				key = Callback(
+						Shows, 
+						title = title,
+						url = url,
+						thumb = thumb,
+						fullEpisodesOnly = False), 
+				title = "All Shows", 
+				thumb = thumb
+			)
 		)
-	)
+		
+	else:
+		oc.add(
+			DirectoryObject(
+				key = Callback(
+						Shows, 
+						title = title,
+						url = url,
+						thumb = thumb,
+						fullEpisodesOnly = False), 
+				title = "All Shows (clips only)", 
+				thumb = thumb
+			)
+		)	
 	
 	return oc
 	
@@ -197,7 +223,7 @@ def Shows(title, url, thumb, fullEpisodesOnly):
 ##########################################################################################
 @route("/video/discovery/VideosChoice")
 def VideosChoice(title, base_url, url, thumb):
-	oc = ObjectContainer(title2 = title)
+	oc = ObjectContainer(title1 = title)
 	
 	pageElement = HTML.ElementFromURL(url)
 	
@@ -221,14 +247,8 @@ def VideosChoice(title, base_url, url, thumb):
 			oc.header  = "Sorry"
 			oc.message = "No videos found."
 			return oc
-
-	totalFullEpisodes = 0
-	for item in pageElement.xpath("//ul//li/text()"):
-		if 'total' in item:
-			totalFullEpisodes = int(item[item.find("total: ") + 7:])
-			break
 	
-	if totalFullEpisodes > 0:
+	if GetTotalEpisodes(pageElement) > 0:
 		oc.add(
 			DirectoryObject(
 				key = Callback(
@@ -362,6 +382,22 @@ def Videos(title, base_url, url, serviceURI, thumb, episodeReq, page = 0, ):
 				pass
 		
 	return dir
+
+
+##########################################################################################
+def GetTotalEpisodes(pageElement):
+	totalFullEpisodes = 0
+	
+	for item in pageElement.xpath("//ul//li/text()"):
+		if 'total' in item:
+			try:
+				totalFullEpisodes = int(item[item.find("total: ") + 7:])
+				break
+			except:
+				pass
+	
+	return totalFullEpisodes
+			
 
 ##########################################################################################
 def ExtractNameFromURL(url):

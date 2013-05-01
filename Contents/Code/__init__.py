@@ -1,6 +1,6 @@
 import urllib2
 
-TITLE = 'Discovery'
+TITLE = 'Discovery Networks'
 ART   = 'art-default.jpg'
 ICON  = 'icon-default.png'
 
@@ -56,21 +56,22 @@ CHANNEL["url"]   = 'http://velocity.discovery.com'
 CHANNEL["thumb"] = 'http://static.ddmcdn.com/en-us/vel//images/default-still.jpg'
 CHANNELS.append(CHANNEL)
 
+
 ##########################################################################################
 def Start():
 	Plugin.AddViewGroup("List", viewMode="List", mediaType="items")
 	Plugin.AddViewGroup("InfoList", viewMode="InfoList", mediaType="items")
 
 	# Setup the default attributes for the ObjectContainer
-	ObjectContainer.title1 = TITLE
+	ObjectContainer.title1     = TITLE
 	ObjectContainer.view_group = "List"
-	ObjectContainer.art = R(ART)
+	ObjectContainer.art        = R(ART)
 
 	# Setup the default attributes for the other objects
 	DirectoryObject.thumb = R(ICON)
-	DirectoryObject.art = R(ART)
+	DirectoryObject.art   = R(ART)
 	VideoClipObject.thumb = R(ICON)
-	VideoClipObject.art = R(ART)
+	VideoClipObject.art   = R(ART)
 
 	HTTP.CacheTime = CACHE_1HOUR
 
@@ -140,6 +141,7 @@ def Shows(title, url, thumb, fullEpisodesOnly):
 	shows       = []
 	showNames   = []
 	pageElement = HTML.ElementFromURL(url + "/videos")
+	
 	for item in pageElement.xpath("//div[contains(@class, 'show-badge')]"):
 		containsFullEpisodes = "full-episodes" in item.xpath(".//a/@data-module-name")[0] 
 		
@@ -154,13 +156,14 @@ def Shows(title, url, thumb, fullEpisodesOnly):
 		if not 'tv-shows/' in showUrl:
 			continue
 
-		show    = {}
+		show = {}
 		
 		if showUrl.startswith("http"):
 			show["url"] = showUrl
 		else:
 			if not showUrl.startswith("/"):
 				showUrl = "/" + showUrl
+				
 			show["url"] = url + showUrl
 
 		show["img"]  = item.xpath(".//img/@src")[0]
@@ -186,9 +189,10 @@ def Shows(title, url, thumb, fullEpisodesOnly):
 		)
 	
 	if len(oc) < 1:
-		return ObjectContainer(header="Sorry", message="No shows found.")
-	else:						 
-		return oc
+		oc.header  = "Sorry"
+		oc.message = "No shows found."
+					 
+	return oc
 
 ##########################################################################################
 @route("/video/discovery/VideosChoice")
@@ -214,7 +218,9 @@ def VideosChoice(title, base_url, url, thumb):
 			pageElement = HTML.ElementFromURL(base_url + serviceURI + '?num=1&page=0&filter=fullepisode')
 		except:
 			Log.Warn("Show without valid service url or no videos yet: " + title)
-			return ObjectContainer(header="Sorry", message="No videos found.")
+			oc.header  = "Sorry"
+			oc.message = "No videos found."
+			return oc
 
 	totalFullEpisodes = 0
 	for item in pageElement.xpath("//ul//li/text()"):
@@ -273,17 +279,33 @@ def Videos(title, base_url, url, serviceURI, thumb, episodeReq, page = 0, ):
 		if len(test) < 1:
 			continue
 			
-		video    = {}
 		videoUrl = item.xpath(".//a/@href")[0]
 		
 		if not videoUrl.startswith("http"):
 			videoUrl = base_url + videoUrl
+
+		video        = {}			
+		video["url"] = videoUrl
+		
+		try:
+			video["img"] = item.xpath(".//a//img/@src")[0]
+		except:
+			video["img"] = None
 			
-		video["url"]      = videoUrl
-		video["img"]      = item.xpath(".//a//img/@src")[0]
-		video["name"]     = item.xpath(".//h4//a/text()")[0]
-		video["summary"]  = item.xpath(".//p/text()")[0]
-		video["show"]     = item.xpath(".//h5/text()")[0]
+		try:
+			video["name"] = item.xpath(".//h4//a/text()")[0]
+		except:
+			video["name"] = None
+		
+		try:
+			video["summary"] = item.xpath(".//p/text()")[0]
+		except:
+			video["summary"] = None
+			
+		try:
+			video["show"] = item.xpath(".//h5/text()")[0]
+		except:
+			video["show"] = None
 		
 		try:
 			video["date"] = Datetime.ParseDate(item.xpath(".//div[contains(@class, 'date')]/text()")[0]).date()
@@ -324,13 +346,16 @@ def Videos(title, base_url, url, serviceURI, thumb, episodeReq, page = 0, ):
 			try:
 				if item.xpath(".//a/@href")[0]:   
 					dir.add(
-						NextPageObject(key = Callback(Videos, title = title, 
-	 							                              base_url = base_url, 
-     								                     	  url = url,
-       								                     	  thumb = thumb,
-       								                     	  episodeReq = episodeReq,
-       		    						                      page = page + 1), 
-						   		   	title = "More ...")
+						NextPageObject(
+							key = Callback(
+									Videos, 
+									title = title, 
+									base_url = base_url, 
+									url = url,
+									thumb = thumb,
+									episodeReq = episodeReq,
+									page = page + 1), 
+							title = "More ...")
 					)
 					return dir
 			except:
@@ -342,6 +367,8 @@ def Videos(title, base_url, url, serviceURI, thumb, episodeReq, page = 0, ):
 def ExtractNameFromURL(url):
 	if url.endswith("/"):
 		url = url[:-1]
+	if url.endswith("/videos"):
+		url = url[:url.find("/videos")]
 	url = url[url.rfind("/") + 1:]
 	if ".htm" in url:
 		url = url[:url.find(".htm")]

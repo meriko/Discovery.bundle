@@ -283,8 +283,8 @@ def VideosChoice(title, base_url, url, thumb):
 
 ##########################################################################################
 @route("/video/discovery/Videos", episodeReq = bool, page = int)
-def Videos(title, base_url, url, serviceURI, thumb, episodeReq, page = 0, ):
-	dir = ObjectContainer(title2 = title)
+def Videos(title, base_url, url, serviceURI, thumb, episodeReq, page = 0):
+	dir = ObjectContainer(title1 = title)
 	dir.view_group = "InfoList"
 	
 	if episodeReq:
@@ -372,6 +372,7 @@ def Videos(title, base_url, url, serviceURI, thumb, episodeReq, page = 0, ):
 									title = title, 
 									base_url = base_url, 
 									url = url,
+									serviceURI = serviceURI,
 									thumb = thumb,
 									episodeReq = episodeReq,
 									page = page + 1), 

@@ -51,8 +51,10 @@ def MediaObjectsForURL(url):
 	
 	mediaObjs.append(mo)
 
-	# Add MP4/FLV
+	# Add MP4 or FLV (we don't know at this time)
 	mo = MediaObject(
+		video_codec             = VideoCodec.H264,
+		audio_codec             = AudioCodec.AAC,
 		audio_channels          = 2,
 		optimized_for_streaming = True,
 		parts                   = [PartObject(key = Callback(PlayFile, url = url, resolution = preferredRes))]
@@ -109,7 +111,8 @@ def PlayFile(url, resolution):
 			random_1 = ''.join(random.choice(string.ascii_uppercase) for x in range(5))
 			random_2 = ''.join(random.choice(string.ascii_uppercase) for x in range(12))
 			source   = source + '?v=2.11.3&fp=MAC%2011,6,602,180&r=' + random_1 + '&g=' + random_2
-				
+		
+		Log(base_url + source)		
 		return Redirect(base_url + source)
 
 ####################################################################################################
@@ -161,7 +164,7 @@ def PlayHLS(url, resolution):
 				newPlaylist = newPlaylist + path + line + '\n'
 			else:
 				newPlaylist = newPlaylist + line + '\n'   
-				
+			
 		return newPlaylist
 	else:
 		return Redirect(hls_url)

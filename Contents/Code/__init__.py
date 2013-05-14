@@ -6,64 +6,58 @@ ICON  = 'icon-default.png'
 
 ITEMS_PER_PAGE = 50
 
-CHANNELS = []
+HTTP_USER_AGENT = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_7_5) AppleWebKit/536.26.17 (KHTML, like Gecko) Version/6.0.2 Safari/536.26.17"
 
-CHANNEL           = {}
-CHANNEL["title"]  = 'Discovery Channel'
-CHANNEL["id"]     = 'Discovery'
-CHANNEL["url"]    = 'http://dsc.discovery.com'
-CHANNEL["thumb"]  = 'http://static.ddmcdn.com/en-us/dsc//images/default-still.jpg'
-CHANNELS.append(CHANNEL)
-
-CHANNEL          = {}
-CHANNEL["title"] = 'Animal Planet'
-CHANNEL["id"]    = 'apl'
-CHANNEL["url"]   = 'http://animal.discovery.com'
-CHANNEL["thumb"] = 'http://static.ddmcdn.com/en-us/apl//images/default-still.jpg'
-CHANNELS.append(CHANNEL)
-
-CHANNEL          = {}
-CHANNEL["title"] = 'TLC'
-CHANNEL["id"]    = 'tlc'
-CHANNEL["url"]   = 'http://www.tlc.com'
-CHANNEL["thumb"] = 'http://static.ddmcdn.com/en-us/tlc//images/default-still.jpg'
-CHANNELS.append(CHANNEL)
-
-CHANNEL          = {}
-CHANNEL["title"] = 'Investigation'
-CHANNEL["id"]    = 'investigation+discovery'
-CHANNEL["url"]   = 'http://investigation.discovery.com'
-CHANNEL["thumb"] = 'http://static.ddmcdn.com/en-us/ids//images/default-still.jpg'
-CHANNELS.append(CHANNEL)
-
-CHANNEL          = {}
-CHANNEL["title"] = 'Science'
-CHANNEL["id"]    = 'science'
-CHANNEL["url"]   = 'http://science.discovery.com'
-CHANNEL["thumb"] = 'http://static.ddmcdn.com/en-us/sci//images/default-still.jpg'
-CHANNELS.append(CHANNEL)
-
-CHANNEL          = {}
-CHANNEL["title"] = 'Destination America'
-CHANNEL["id"]    = 'dam'
-CHANNEL["url"]   = 'http://america.discovery.com'
-CHANNEL["thumb"] = 'http://static.ddmcdn.com/en-us/dam//images/default-still.jpg'
-CHANNELS.append(CHANNEL)
-
-CHANNEL          = {}
-CHANNEL["title"] = 'Military Channel'
-CHANNEL["id"]    = 'military'
-CHANNEL["url"]   = 'http://military.discovery.com'
-CHANNEL["thumb"] = 'http://static.ddmcdn.com/en-us/mil//images/default-still.jpg'
-CHANNELS.append(CHANNEL)
-
-CHANNEL          = {}
-CHANNEL["title"] = 'Velocity'
-CHANNEL["id"]    = 'velocity'
-CHANNEL["url"]   = 'http://velocity.discovery.com'
-CHANNEL["thumb"] = 'http://static.ddmcdn.com/en-us/vel//images/default-still.jpg'
-CHANNELS.append(CHANNEL)
-
+CHANNELS = [ 
+	{
+		'title': 	'Discovery Channel',
+		'id':		'Discovery',
+		'url':		'http://dsc.discovery.com',
+		'thumb':	'http://static.ddmcdn.com/en-us/dsc//images/default-still.jpg'
+	},
+	{
+		'title': 	'Animal Planet',
+		'id':		'apl',
+		'url':		'http://animal.discovery.com',
+		'thumb':	'http://static.ddmcdn.com/en-us/apl//images/default-still.jpg'
+	},
+	{
+		'title': 	'TLC',
+		'id':		'tlc',
+		'url':		'http://www.tlc.com',
+		'thumb':	'http://static.ddmcdn.com/en-us/tlc//images/default-still.jpg'
+	},
+	{
+		'title': 	'Investigation Discovery',
+		'id':		'investigation+discovery',
+		'url':		'http://investigation.discovery.com',
+		'thumb':	'http://static.ddmcdn.com/en-us/ids//images/default-still.jpg'
+	},
+	{
+		'title': 	'Science',
+		'id':		'science',
+		'url':		'http://science.discovery.com',
+		'thumb':	'http://static.ddmcdn.com/en-us/sci//images/default-still.jpg'
+	},
+	{
+		'title': 	'Destination America',
+		'id':		'dam',
+		'url':		'http://america.discovery.com',
+		'thumb':	'http://static.ddmcdn.com/en-us/dam//images/default-still.jpg'
+	},
+	{
+		'title': 	'Military Channel',
+		'id':		'military',
+		'url':		'http://military.discovery.com',
+		'thumb':	'http://static.ddmcdn.com/en-us/mil//images/default-still.jpg'
+	},
+	{
+		'title': 	'Velocity',
+		'id':		'velocity',
+		'url':		'http://velocity.discovery.com',
+		'thumb':	'http://static.ddmcdn.com/en-us/vel//images/default-still.jpg'
+	}
+]
 
 ##########################################################################################
 def Start():
@@ -81,7 +75,8 @@ def Start():
 	VideoClipObject.thumb = R(ICON)
 	VideoClipObject.art   = R(ART)
 
-	HTTP.CacheTime = CACHE_1HOUR
+	HTTP.CacheTime             = CACHE_1HOUR
+	HTTP.Headers['User-agent'] = HTTP_USER_AGENT
 
 ##########################################################################################
 @handler('/video/discovery', TITLE, art=ART, thumb=ICON)
@@ -142,6 +137,8 @@ def ShowsChoice(title, url, id, thumb):
 			)
 		)
 		
+		return oc
+		
 	else:
 		oc.add(
 			DirectoryObject(
@@ -168,7 +165,7 @@ def Shows(title, url, thumb, fullEpisodesOnly):
 	showNames   = []
 	pageElement = HTML.ElementFromURL(url + "/videos")
 	
-	for item in pageElement.xpath("//div[contains(@class, 'show-badge')]"):
+	for item in pageElement.xpath("//*[@class = 'show-badge']"):
 		containsFullEpisodes = "full-episodes" in item.xpath(".//a/@data-module-name")[0] 
 		
 		if fullEpisodesOnly and not containsFullEpisodes:
@@ -264,22 +261,30 @@ def VideosChoice(title, base_url, url, thumb):
 			)
 		)				
 
-	oc.add(
-		DirectoryObject(
-			key = Callback(
-					Videos, 
-					title = title,
-					base_url = base_url, 
-					url = url,
-					serviceURI = serviceURI,
-					thumb = thumb,
-					episodeReq = False), 
-			title = "Clips", 
-			thumb = thumb
+		oc.add(
+			DirectoryObject(
+				key = Callback(
+						Videos, 
+						title = title,
+						base_url = base_url, 
+						url = url,
+						serviceURI = serviceURI,
+						thumb = thumb,
+						episodeReq = False), 
+				title = "Clips", 
+				thumb = thumb
+			)
 		)
-	)
-
-	return oc
+		
+		return oc
+	else:
+		return Videos(
+				title = title,
+				base_url = base_url, 
+				url = url,
+				serviceURI = serviceURI,
+				thumb = thumb,
+				episodeReq = False)
 
 ##########################################################################################
 @route("/video/discovery/Videos", episodeReq = bool, page = int)

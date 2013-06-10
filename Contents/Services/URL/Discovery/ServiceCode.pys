@@ -9,24 +9,7 @@ def NormalizeURL(url):
 
 ####################################################################################################
 def MetadataObjectForURL(url):
-	try:
-		preferredRes = RE_RESOLUTION.search(url).group(0)
-		url          = url.replace("?resolution=" + preferredRes, "")
-	except:
-		pass
-
-	id = FindShowId(url)
-	if id:
-  		video = JSON.ObjectFromURL('http://static.discoverymedia.com/videos/components/dsc/' + id + '/clip-data-service.html')
-  			
-		return EpisodeObject(
-			title = video['episodeTitle'],
-			summary = video['videoCaption'],
-			duration = video['duration'],
-			thumb = video['thumbnailURL'],
-			art = video['videoStill'],
-			originally_available_at = Datetime.ParseDate(video['datePosted']).date()
-		)
+	return None
 
 ####################################################################################################
 def MediaObjectsForURL(url):

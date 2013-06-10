@@ -104,7 +104,7 @@ def MainMenu():
 ##########################################################################################
 @route("/video/discovery/ShowsChoice")
 def ShowsChoice(title, url, id, thumb):
-	oc = ObjectContainer()
+	oc = ObjectContainer(title1 = title)
 	
 	pageElement = HTML.ElementFromURL(url + "/services/taxonomy/" + id + "/?feedGroup=video&filter=fullepisode&num=1")
 	
@@ -156,7 +156,7 @@ def ShowsChoice(title, url, id, thumb):
 ##########################################################################################
 @route("/video/discovery/Shows", fullEpisodesOnly = bool)
 def Shows(title, url, thumb, fullEpisodesOnly):
-	oc = ObjectContainer()
+	oc = ObjectContainer(title1 = title)
 	
 	# Add shows by parsing the site
 	shows       = []
@@ -218,7 +218,7 @@ def Shows(title, url, thumb, fullEpisodesOnly):
 ##########################################################################################
 @route("/video/discovery/VideosChoice")
 def VideosChoice(title, base_url, url, thumb):
-	oc = ObjectContainer()
+	oc = ObjectContainer(title1 = title)
 	
 	pageElement = HTML.ElementFromURL(url)
 	

@@ -394,8 +394,10 @@ def GetTotalEpisodes(pageElement):
 	
 	for item in pageElement.xpath("//ul//li/text()"):
 		if 'total' in item.lower():
-			totalFullEpisodes = int(Regex('.*total *: *([0-9]+).*', Regex.IGNORECASE|Regex.MULTILINE).search(item).groups()[0])
-			break
+			m = Regex('.*total *: *([0-9]+).*', Regex.IGNORECASE|Regex.MULTILINE).search(item)
+			if m is not None:
+				totalFullEpisodes = int(m.groups()[0])
+				break
 	
 	return totalFullEpisodes
 			

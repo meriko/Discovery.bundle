@@ -1,6 +1,7 @@
-import re
 import string
 import random
+
+RE_RESOLUTION = Regex('(?<=resolution=)[0-9]+')
 
 ####################################################################################################
 def NormalizeURL(url):
@@ -9,8 +10,7 @@ def NormalizeURL(url):
 ####################################################################################################
 def MetadataObjectForURL(url):
 	try:
-		m            = re.search('(?<=resolution=)[0-9]+', url)
-		preferredRes = m.group(0)
+		preferredRes = RE_RESOLUTION.search(url).group(0)
 		url          = url.replace("?resolution=" + preferredRes, "")
 	except:
 		pass
@@ -33,8 +33,7 @@ def MediaObjectsForURL(url):
 	mediaObjs = []
 
 	try:
-		m            = re.search('(?<=resolution=)[0-9]+', url)
-		preferredRes = m.group(0)
+		preferredRes = RE_RESOLUTION.search(url).group(0)
 		url          = url.replace("?resolution=" + preferredRes, "")
 	except:
 		preferredRes = None
@@ -111,20 +110,14 @@ def PlayFile(url, resolution):
 			random_1 = ''.join(random.choice(string.ascii_uppercase) for x in range(5))
 			random_2 = ''.join(random.choice(string.ascii_uppercase) for x in range(12))
 			source   = source + '?v=2.11.3&fp=MAC%2011,6,602,180&r=' + random_1 + '&g=' + random_2
-		
-		Log(base_url + source)		
+				
 		return Redirect(base_url + source)
 
 ####################################################################################################
 def FindShowId(url):
 	pageContent = HTTP.Request(url).content
-	for line in pageContent.splitlines():
-  		if 'clipRefId' in line:
-  			# Replace with regexp later!
-  			id = line[line.find("clipRefId") + 13 : len(line) - 2]
-  			Log(id)
-  			return id
-  	return None
+	id = Regex('.*\"clipRefId\" *: *\"(.*)\".*', Regex.IGNORECASE|Regex.MULTILINE).search(pageContent).groups()[0]
+	return id
 
 ####################################################################################################
 def BitrateToResolution(bitrate):
@@ -142,7 +135,6 @@ def PlayHLS(url, resolution):
 	for line in pageContent.splitlines():
   		if 'master.m3u8' in line:
   			hls_url = line[line.find("http") : line.rfind('"')]
-			Log(hls_url)
 			break
 
 	if resolution:
@@ -189,13 +181,13 @@ def getHLSStreams(hlsUrl):
 		# - Bitrate
 		for line in streamSpecLines:
 			if "BANDWIDTH" in line:
-				bwm = re.search('(?<=BANDWIDTH=)[0-9]+', line)
+				bwm = Regex('(?<=BANDWIDTH=)[0-9]+').search(line)
 
 				stream               = {}
 				stream["bitrate"]    = int(bwm.group(0))        
 
 				if "RESOLUTION" in line:
-					rnm                  = re.search('(?<=RESOLUTION=)[0-9]+x[0-9]+', line)
+					rnm                  = Regex('(?<=RESOLUTION=)[0-9]+x[0-9]+').search(line)
 					stream["resolution"] = int(rnm.group(0).split("x")[1])
 				else:
 					stream["resolution"] = 0
@@ -203,8 +195,6 @@ def getHLSStreams(hlsUrl):
 			elif "index" in line:
 				if stream["resolution"] > 0:
 					stream["url"] = hlsUrl.replace("master.m3u8", line)
-					Log("STREAM: " + stream["url"])
 					streams.append(stream)         
 
 	return streams
-

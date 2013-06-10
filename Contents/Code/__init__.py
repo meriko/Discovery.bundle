@@ -1,5 +1,3 @@
-import urllib2
-
 TITLE = 'Discovery Networks'
 ART   = 'art-default.jpg'
 ICON  = 'icon-default.png'
@@ -79,13 +77,13 @@ def Start():
 	HTTP.Headers['User-agent'] = HTTP_USER_AGENT
 
 ##########################################################################################
-@handler('/video/discovery', TITLE, art=ART, thumb=ICON)
+@handler('/video/discovery', TITLE, art = ART, thumb = ICON)
 def MainMenu():
-	menu = ObjectContainer(title1 = TITLE)
+	oc = ObjectContainer()
 	
 	# Add all channels
 	for channel in CHANNELS:
-		menu.add(
+		oc.add(
 			DirectoryObject(
 				key = Callback(
 						ShowsChoice, 
@@ -99,14 +97,14 @@ def MainMenu():
 		)		
 	
 	# Add preference for video resolution
-	menu.add(PrefsObject(title = "Settings..."))
+	oc.add(PrefsObject(title = "Settings..."))
 	
-	return menu
+	return oc
 
 ##########################################################################################
 @route("/video/discovery/ShowsChoice")
 def ShowsChoice(title, url, id, thumb):
-	oc = ObjectContainer(title1 = title)
+	oc = ObjectContainer()
 	
 	pageElement = HTML.ElementFromURL(url + "/services/taxonomy/" + id + "/?feedGroup=video&filter=fullepisode&num=1")
 	
@@ -158,7 +156,7 @@ def ShowsChoice(title, url, id, thumb):
 ##########################################################################################
 @route("/video/discovery/Shows", fullEpisodesOnly = bool)
 def Shows(title, url, thumb, fullEpisodesOnly):
-	oc = ObjectContainer(title1 = title)
+	oc = ObjectContainer()
 	
 	# Add shows by parsing the site
 	shows       = []
@@ -220,7 +218,7 @@ def Shows(title, url, thumb, fullEpisodesOnly):
 ##########################################################################################
 @route("/video/discovery/VideosChoice")
 def VideosChoice(title, base_url, url, thumb):
-	oc = ObjectContainer(title1 = title)
+	oc = ObjectContainer()
 	
 	pageElement = HTML.ElementFromURL(url)
 	

@@ -287,8 +287,8 @@ def VideosChoice(title, base_url, url, thumb):
 ##########################################################################################
 @route("/video/discovery/Videos", episodeReq = bool, page = int)
 def Videos(title, base_url, url, serviceURI, thumb, episodeReq, page = 0):
-	dir = ObjectContainer(title1 = title)
-	dir.view_group = "InfoList"
+	oc            = ObjectContainer(title1 = title)
+	oc.view_group = "InfoList"
 	
 	if episodeReq:
 		optionString = "fullepisode"
@@ -353,7 +353,7 @@ def Videos(title, base_url, url, serviceURI, thumb, episodeReq, page = 0):
 		else:
 			video["url"] = video["url"] + "?resolution=270"
 		
-		dir.add(
+		oc.add(
 			EpisodeObject(
 				url = video["url"],
 				title = video["name"],
@@ -361,14 +361,15 @@ def Videos(title, base_url, url, serviceURI, thumb, episodeReq, page = 0):
 				summary = video["summary"],
 				thumb = video["img"],
 				originally_available_at = video["date"],
-				duration = video["duration"])
+				duration = video["duration"]
+			)
 		)		
     
-	if len(dir) >= ITEMS_PER_PAGE:
+	if len(oc) >= ITEMS_PER_PAGE:
 		for item in pageElement.xpath("//div[contains(@class, 'pagination')]//ul//li"):
 			try:
 				if item.xpath(".//a/@href")[0]:   
-					dir.add(
+					oc.add(
 						NextPageObject(
 							key = Callback(
 									Videos, 
@@ -381,11 +382,11 @@ def Videos(title, base_url, url, serviceURI, thumb, episodeReq, page = 0):
 									page = page + 1), 
 							title = "More ...")
 					)
-					return dir
+					return oc
 			except:
 				pass
 		
-	return dir
+	return oc
 
 
 ##########################################################################################

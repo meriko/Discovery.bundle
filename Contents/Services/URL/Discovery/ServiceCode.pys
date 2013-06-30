@@ -9,7 +9,38 @@ def NormalizeURL(url):
 
 ####################################################################################################
 def MetadataObjectForURL(url):
-	return None
+	try:
+		try:
+			preferredRes = RE_RESOLUTION.search(url).group(0)
+			url          = url.replace("?resolution=" + preferredRes, "")
+		except:
+			pass
+ 
+		pageContent = HTTP.Request(url).content
+		
+		title   = Regex('.*\"episodeTitle\" *: *\"(.*)\".*', Regex.IGNORECASE|Regex.MULTILINE).search(pageContent).groups()[0]
+		show    = Regex('.*\"programTitle\" *: *\"(.*)\".*', Regex.IGNORECASE|Regex.MULTILINE).search(pageContent).groups()[0]
+		summary = Regex('.*\"videoCaption\" *: *\"(.*)\".*', Regex.IGNORECASE|Regex.MULTILINE).search(pageContent).groups()[0]
+		
+		try:
+			duration = int(Regex('.*\"duration\" *: *([0-9]+).*', Regex.IGNORECASE|Regex.MULTILINE).search(pageContent).groups()[0].strip()) * 1000
+		except:
+			duration = None
+		
+		thumb = Regex('.*\"thumbnailURL\" *: *\"(.*)\".*', Regex.IGNORECASE|Regex.MULTILINE).search(pageContent).groups()[0]
+		art   = Regex('.*\"videoStillURL\" *: *\"(.*)\".*', Regex.IGNORECASE|Regex.MULTILINE).search(pageContent).groups()[0]
+		
+		return EpisodeObject(
+			title = title,
+			show = show,
+			summary = summary,
+			duration = duration,
+			thumb = thumb,
+			art = art
+		)
+		
+	except:
+		return None
 
 ####################################################################################################
 def MediaObjectsForURL(url):

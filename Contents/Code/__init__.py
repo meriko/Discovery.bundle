@@ -9,48 +9,56 @@ HTTP_USER_AGENT = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_7_5) AppleWebKit/53
 CHANNELS = [ 
 	{
 		'title': 	'Discovery Channel',
+		'desc':		'Science, History, Space, Tech, Sharks, News!',
 		'id':		'Discovery',
 		'url':		'http://dsc.discovery.com',
 		'thumb':	'http://static.ddmcdn.com/en-us/dsc//images/default-still.jpg'
 	},
 	{
 		'title': 	'Animal Planet',
+		'desc':		'Animal Planet lets you explore cat breeds, dog breeds, wild animals and pets.',
 		'id':		'apl',
 		'url':		'http://animal.discovery.com',
 		'thumb':	'http://static.ddmcdn.com/en-us/apl//images/default-still.jpg'
 	},
 	{
 		'title': 	'TLC',
+		'desc':		'TLC TV network opens doors to extraordinary lives.',
 		'id':		'tlc',
 		'url':		'http://www.tlc.com',
 		'thumb':	'http://static.ddmcdn.com/en-us/tlc//images/default-still.jpg'
 	},
 	{
 		'title': 	'Investigation Discovery',
+		'desc':		'Hollywood crimes, murder and forensic investigations. Investigation Discovery gives you insight into true stories that piece together puzzles of human nature.',
 		'id':		'investigation+discovery',
 		'url':		'http://investigation.discovery.com',
 		'thumb':	'http://static.ddmcdn.com/en-us/ids//images/default-still.jpg'
 	},
 	{
-		'title': 	'Science',
+		'title': 	'Science Channel',
+		'desc':		'Science Channel video and news explores wormholes, outer space, engineering, cutting-edge tech, and the latest on your favorite SCI programs!',
 		'id':		'science',
 		'url':		'http://science.discovery.com',
 		'thumb':	'http://static.ddmcdn.com/en-us/sci//images/default-still.jpg'
 	},
 	{
 		'title': 	'Destination America',
+		'desc':		'Destination America.',
 		'id':		'dam',
 		'url':		'http://america.discovery.com',
 		'thumb':	'http://static.ddmcdn.com/en-us/dam//images/default-still.jpg'
 	},
 	{
 		'title': 	'Military Channel',
+		'desc':		'Every weapon, war, soldier and branch of U.S. Defense has a story to be heard. Watch Military Channel video to meet the soldiers and hear the stories.',
 		'id':		'military',
 		'url':		'http://military.discovery.com',
 		'thumb':	'http://static.ddmcdn.com/en-us/mil//images/default-still.jpg'
 	},
 	{
 		'title': 	'Velocity',
+		'desc':		'Get ready for Velocity!  Velocity brings the best of car programming with diverse new original series and specials.',
 		'id':		'velocity',
 		'url':		'http://velocity.discovery.com',
 		'thumb':	'http://static.ddmcdn.com/en-us/vel//images/default-still.jpg'
@@ -70,8 +78,8 @@ def Start():
 	# Setup the default attributes for the other objects
 	DirectoryObject.thumb = R(ICON)
 	DirectoryObject.art   = R(ART)
-	VideoClipObject.thumb = R(ICON)
-	VideoClipObject.art   = R(ART)
+	EpisodeObject.thumb   = R(ICON)
+	EpisodeObject.art   = R(ART)
 
 	HTTP.CacheTime             = CACHE_1HOUR
 	HTTP.Headers['User-agent'] = HTTP_USER_AGENT
@@ -91,12 +99,13 @@ def MainMenu():
 						url = channel["url"],
 						id = channel["id"],
 						thumb = channel["thumb"]), 
-				title = channel["title"], 
+				title = channel["title"],
+				summary = channel["desc"],
 				thumb = channel["thumb"]
 			)
 		)		
 	
-	# Add preference for video resolution
+	# Add preferences
 	oc.add(PrefsObject(title = "Settings..."))
 	
 	return oc
@@ -352,6 +361,19 @@ def Videos(title, base_url, url, serviceURI, thumb, episodeReq, page = 0):
 			video["url"] = video["url"] + "?resolution=360"
 		else:
 			video["url"] = video["url"] + "?resolution=270"
+		
+		if Prefs['streamformat'] == "HLS":
+			pass
+		else:
+			if Prefs['qualitypreference'] == "Automatic":
+				video["url"] = video["url"] + "?"
+			else:
+				video["url"] = video["url"] + "&"
+				
+			if Prefs['streamformat'] == "FLV/MP4":
+				video["url"] = video["url"] + "fmt=flv"
+			else:
+				video["url"] = video["url"] + "fmt=all"
 		
 		oc.add(
 			EpisodeObject(

@@ -1,7 +1,5 @@
-import string
-import random
-
 RE_RESOLUTION = Regex('(?<=resolution=)[0-9]+')
+RE_FORMAT     = Regex('(?<=fmt=)[A-Za-z]+')
 
 ####################################################################################################
 def NormalizeURL(url):
@@ -10,25 +8,10 @@ def NormalizeURL(url):
 ####################################################################################################
 def MetadataObjectForURL(url):
 	try:
-		try:
-			preferredRes = RE_RESOLUTION.search(url).group(0)
-			url          = url.replace("?resolution=" + preferredRes, "")
-		except:
-			pass
+		# Remove possible preference query from URL
+		url = url.rsplit('?')[0]
  
-		pageContent = HTTP.Request(url).content
-		
-		title   = Regex('.*\"episodeTitle\" *: *\"(.*)\".*', Regex.IGNORECASE|Regex.MULTILINE).search(pageContent).groups()[0]
-		show    = Regex('.*\"programTitle\" *: *\"(.*)\".*', Regex.IGNORECASE|Regex.MULTILINE).search(pageContent).groups()[0]
-		summary = Regex('.*\"videoCaption\" *: *\"(.*)\".*', Regex.IGNORECASE|Regex.MULTILINE).search(pageContent).groups()[0]
-		
-		try:
-			duration = int(Regex('.*\"duration\" *: *([0-9]+).*', Regex.IGNORECASE|Regex.MULTILINE).search(pageContent).groups()[0].strip()) * 1000
-		except:
-			duration = None
-		
-		thumb = Regex('.*\"thumbnailURL\" *: *\"(.*)\".*', Regex.IGNORECASE|Regex.MULTILINE).search(pageContent).groups()[0]
-		art   = Regex('.*\"videoStillURL\" *: *\"(.*)\".*', Regex.IGNORECASE|Regex.MULTILINE).search(pageContent).groups()[0]
+		[title, show, summary, duration, thumb, art, id] = GetVideoDetails(url)
 		
 		return EpisodeObject(
 			title = title,
@@ -46,64 +29,85 @@ def MetadataObjectForURL(url):
 def MediaObjectsForURL(url):
 	mediaObjs = []
 
+	# Parse possible preference query
 	try:
-		preferredRes = RE_RESOLUTION.search(url).group(0)
-		url          = url.replace("?resolution=" + preferredRes, "")
+		maxSourceResolution = int(RE_RESOLUTION.search(url).group(0))
 	except:
-		preferredRes = None
+		maxSourceResolution = None
+		
+	try:
+		streamFormat = RE_FORMAT.search(url).group(0)
+	except:
+		streamFormat = None
+	
+	# Remove possible preference query from URL
+	url = url.rsplit('?')[0]
 
 	# Add HLS
-	mo = MediaObject(
-		container               = 'mpegts',
-		video_codec             = VideoCodec.H264,
-		audio_codec             = AudioCodec.AAC,                 
-		audio_channels          = 2,
-		optimized_for_streaming = True,
-		parts                   = [PartObject(key = HTTPLiveStreamURL(Callback(PlayHLS, url = url, resolution = preferredRes)))]
-	)
-	
-	mediaObjs.append(mo)
+	if not streamFormat or streamFormat == "all":
+		mediaObjs.append(
+			HLSMediaObject(url, maxSourceResolution)
+		)
+		if maxSourceResolution:
+			for resolution in [720, 480, 360, 270]:
+				if resolution < maxSourceResolution:
+					mediaObjs.append(
+						HLSMediaObject(url, resolution)
+					)
 
 	# Add MP4 or FLV (we don't know at this time)
-	mo = MediaObject(
-		video_codec             = VideoCodec.H264,
-		audio_codec             = AudioCodec.AAC,
-		audio_channels          = 2,
-		optimized_for_streaming = True,
-		parts                   = [PartObject(key = Callback(PlayFile, url = url, resolution = preferredRes))]
-    )
-	
-	mediaObjs.append(mo)
+	if streamFormat and streamFormat in ["flv", "all"]:
+		mediaObjs.append(
+			FLVMP4MediaObject(url, maxSourceResolution)
+		)
+		if maxSourceResolution:
+			for resolution in [720, 480, 360]:
+				if resolution < maxSourceResolution:
+					mediaObjs.append(
+						FLVMP4MediaObject(url, resolution)
+					)
 	
 	return mediaObjs
 
 ####################################################################################################
+def HLSMediaObject(url, resolution):
+	if resolution:
+		video_resolution = str(resolution)
+	else:
+		video_resolution = None
+	
+	return MediaObject(
+			container               = 'mpegts',
+			video_codec             = VideoCodec.H264,
+			audio_codec             = AudioCodec.AAC,                 
+			audio_channels          = 2,
+			video_resolution        = video_resolution,
+			optimized_for_streaming = True,
+			parts                   = [PartObject(key = HTTPLiveStreamURL(Callback(PlayHLS, url = url, resolution = resolution)))]
+	)
+	
+####################################################################################################
+def FLVMP4MediaObject(url, resolution):
+	if not resolution:
+		resolution = 720
+		
+	return MediaObject(
+			video_codec             = VideoCodec.H264,
+			audio_codec             = AudioCodec.AAC,
+			audio_channels          = 2,
+			video_resolution        = str(resolution),
+			optimized_for_streaming = True,
+			parts                   = [PartObject(key = Callback(PlayFile, url = url, resolution = resolution))]
+    )
+
+####################################################################################################
 def PlayFile(url, resolution):
 	if not resolution:
-		resolution = "720"
+		resolution = 720
 		
-	id = FindShowId(url)
-	if id:
-  		# A sample XML
-  		'''
-		<?xml version="1.0"?>
-		<!DOCTYPE smil PUBLIC "-//W3C//DTD SMIL 2.0//EN" "http://www.w3.org/2001/SMIL20/SMIL20.dtd">
-		<smil xmlns="http://www.w3.org/2001/SMIL20/Language">
-			<head>
-				<meta name="reference_id" content="6222a11071685a3f9fa14f65be0e208b97eb0822" />
-				<meta name="httpBase" content="http://discidevflash-f.akamaihd.net" />
-				<meta name="vod" content="true"/>
-			</head>
-			<body>
-				<switch reference_id="6222a11071685a3f9fa14f65be0e208b97eb0822">
-							<video src="digmed/hdnet/a4/fa/13937300301001_PW-BOB_Back-to-Business-3500k.mp4" system-bitrate="3500000"/>
-							<video src="digmed/hdnet/a4/fa/13937300301001_PW-BOB_Back-to-Business-1500k.mp4" system-bitrate="1500000"/>
-							<video src="digmed/hdnet/a4/fa/13937300301001_PW-BOB_Back-to-Business-800k.mp4" system-bitrate="800000"/>
-						</switch>
-			</body>
-		</smil>
-		'''
-  			
+	[title, show, summary, duration, thumb, art, id] = GetVideoDetails(url)
+	
+	if id:	
 		xmlElement = XML.ElementFromURL("http://static.discoverymedia.com/videos/components/dsc/%s/smil-service.smil" % id)
 
 		for meta in xmlElement.xpath("//*[contains(name(), 'meta')]"):
@@ -115,23 +119,44 @@ def PlayFile(url, resolution):
 		for video in xmlElement.xpath("//*[contains(name(), 'video')]"):
 			bitrate = video.xpath(".//@system-bitrate")[0]
 				
-			newDiff = abs(BitrateToResolution(int(bitrate)) - int(resolution))
+			newDiff = abs(BitrateToResolution(int(bitrate)) - resolution)
 			if newDiff < diff:
 				source  = "/" + video.xpath(".//@src")[0]
 				diff    = newDiff
 		
 		if 'flv' in source:
-			random_1 = ''.join(random.choice(string.ascii_uppercase) for x in range(5))
-			random_2 = ''.join(random.choice(string.ascii_uppercase) for x in range(12))
+			random_1 = ''.join(RandomChoice(UPPERCASE) for x in range(5))
+			random_2 = ''.join(RandomChoice(UPPERCASE) for x in range(12))
 			source   = source + '?v=2.11.3&fp=MAC%2011,6,602,180&r=' + random_1 + '&g=' + random_2
 				
 		return Redirect(base_url + source)
-
+	
 ####################################################################################################
-def FindShowId(url):
+def GetVideoDetails(url):
 	pageContent = HTTP.Request(url).content
-	id = Regex('.*\"clipRefId\" *: *\"(.*)\".*', Regex.IGNORECASE|Regex.MULTILINE).search(pageContent).groups()[0]
-	return id
+		
+	title   = Regex('.*\"episodeTitle\" *: *\"(.*)\".*', Regex.IGNORECASE|Regex.MULTILINE).search(pageContent).groups()[0]
+	show    = Regex('.*\"programTitle\" *: *\"(.*)\".*', Regex.IGNORECASE|Regex.MULTILINE).search(pageContent).groups()[0]
+	summary = Regex('.*\"videoCaption\" *: *\"(.*)\".*', Regex.IGNORECASE|Regex.MULTILINE).search(pageContent).groups()[0]
+		
+	try:
+		duration = int(Regex('.*\"duration\" *: *([0-9]+).*', Regex.IGNORECASE|Regex.MULTILINE).search(pageContent).groups()[0].strip()) * 1000
+	except:
+		duration = None
+		
+	thumb = Regex('.*\"thumbnailURL\" *: *\"(.*)\".*', Regex.IGNORECASE|Regex.MULTILINE).search(pageContent).groups()[0]
+	art   = Regex('.*\"videoStillURL\" *: *\"(.*)\".*', Regex.IGNORECASE|Regex.MULTILINE).search(pageContent).groups()[0]
+	id    = Regex('.*\"clipRefId\" *: *\"(.*)\".*', Regex.IGNORECASE|Regex.MULTILINE).search(pageContent).groups()[0]
+	
+	return [
+			title,
+			show,
+			summary,
+			duration,
+			thumb,
+			art,
+			id
+	]
 
 ####################################################################################################
 def BitrateToResolution(bitrate):
@@ -157,7 +182,7 @@ def PlayHLS(url, resolution):
 		hlsUrl = hls_url     
 		diff   = 1000000000  # Some huge number
 		for stream in HLSStreams:
-			newDiff = abs(stream["resolution"] - int(resolution))
+			newDiff = abs(stream["resolution"] - resolution)
 			if newDiff < diff:
 				diff   = newDiff
 				hlsUrl = stream["url"]

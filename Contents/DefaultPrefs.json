@@ -2,8 +2,15 @@
     {
         "id": "qualitypreference",
         "type": "enum",
-        "label": "Playback Quality",
-        "values": [ "Automatic", "High (720p)", "Normal (480p)", "Medium (396p)", "Low (270p)"],
+        "label": "Source Quality",
+        "values": [ "Automatic", "High (720p)", "Normal (480p)", "Medium (360p)", "Low (270p)"],
         "default": "High (720p)"
+    },
+    {
+        "id": "streamformat",
+        "type": "enum",
+        "label": "Source Stream Format",
+        "values": [ "HLS", "FLV/MP4", "Prompt"],
+        "default": "HLS"
     }
 ]

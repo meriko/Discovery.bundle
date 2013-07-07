@@ -1,5 +1,6 @@
 RE_RESOLUTION = Regex('(?<=resolution=)[0-9]+')
 RE_FORMAT     = Regex('(?<=fmt=)[A-Za-z]+')
+RE_VIDEO_ID   = Regex('(?<=embed/)[0-9]+')
 
 ####################################################################################################
 def NormalizeURL(url):
@@ -8,19 +9,32 @@ def NormalizeURL(url):
 ####################################################################################################
 def MetadataObjectForURL(url):
 	try:
-		# Remove possible preference query from URL
-		url = url.rsplit('?')[0]
+		if 'apl.tv' in url:
+			pageElement = HTML.ElementFromURL(url)
+			
+			title   = pageElement.xpath('//meta[@property="og:title"]')[0].get('content')
+			summary = pageElement.xpath('//meta[@name="description"]')[0].get('content')
+			thumb   = pageElement.xpath('//meta[@property="og:image"]')[0].get('content')
+			
+			return EpisodeObject(
+				title = title,
+				summary = summary,
+				thumb = thumb
+			)
+		else:
+			# Remove possible preference query from URL
+			url = url.rsplit('?')[0]
  
-		[title, show, summary, duration, thumb, art, id] = GetVideoDetails(url)
+			[title, show, summary, duration, thumb, art, id] = GetVideoDetails(url)
 		
-		return EpisodeObject(
-			title = title,
-			show = show,
-			summary = summary,
-			duration = duration,
-			thumb = thumb,
-			art = art
-		)
+			return EpisodeObject(
+				title = title,
+				show = show,
+				summary = summary,
+				duration = duration,
+				thumb = thumb,
+				art = art
+			)
 		
 	except:
 		return None
@@ -43,29 +57,49 @@ def MediaObjectsForURL(url):
 	# Remove possible preference query from URL
 	url = url.rsplit('?')[0]
 
-	# Add HLS
-	if not streamFormat or streamFormat == "all":
-		mediaObjs.append(
-			HLSMediaObject(url, maxSourceResolution)
-		)
-		if maxSourceResolution:
-			for resolution in [720, 480, 360, 270]:
-				if resolution < maxSourceResolution:
-					mediaObjs.append(
-						HLSMediaObject(url, resolution)
-					)
+	if 'apl.tv' in url:
+		pageElement = HTML.ElementFromURL(url)
 
-	# Add MP4 or FLV (we don't know at this time)
-	if streamFormat and streamFormat in ["flv", "all"]:
+		videoUStreamURL = pageElement.xpath("//div[contains(@class, 'video-container')]//iframe/@src")[0]
+		videoID         = RE_VIDEO_ID.search(videoUStreamURL).group(0)
+
+		HLSURL = 'http://iphone-streaming.ustream.tv/uhls/%s/streams/live/iphone/playlist.m3u8?appType=11&amp;appVersion=2' % videoID
+
 		mediaObjs.append(
-			FLVMP4MediaObject(url, maxSourceResolution)
+			MediaObject(
+				container               = 'mpegts',
+				video_codec             = VideoCodec.H264,
+				audio_codec             = AudioCodec.AAC,                 
+				audio_channels          = 2,
+				optimized_for_streaming = True,
+				parts                   = [PartObject(key = HTTPLiveStreamURL(HLSURL))]
+			)
 		)
-		if maxSourceResolution:
-			for resolution in [720, 480, 360]:
-				if resolution < maxSourceResolution:
-					mediaObjs.append(
-						FLVMP4MediaObject(url, resolution)
-					)
+		
+	else:
+		# Add HLS
+		if not streamFormat or streamFormat == "all":
+			mediaObjs.append(
+				HLSMediaObject(url, maxSourceResolution)
+			)
+			if maxSourceResolution:
+				for resolution in [720, 480, 360, 270]:
+					if resolution < maxSourceResolution:
+						mediaObjs.append(
+							HLSMediaObject(url, resolution)
+						)
+
+		# Add MP4 or FLV (we don't know at this time)
+		if streamFormat and streamFormat in ["flv", "all"]:
+			mediaObjs.append(
+				FLVMP4MediaObject(url, maxSourceResolution)
+			)
+			if maxSourceResolution:
+				for resolution in [720, 480, 360]:
+					if resolution < maxSourceResolution:
+						mediaObjs.append(
+							FLVMP4MediaObject(url, resolution)
+						)
 	
 	return mediaObjs
 

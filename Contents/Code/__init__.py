@@ -22,6 +22,13 @@ CHANNELS = [
 		'thumb':	'http://static.ddmcdn.com/en-us/apl//images/default-still.jpg'
 	},
 	{
+		'title': 	'Animal Planet LIVE',
+		'desc':		'Animal Planet LIVE, featuring live HD cams for chicks, puppies, ants, cockroaches, penguins, kittens and many more.',
+		'id':		'apltv',
+		'url':		'http://www.apl.tv',
+		'thumb':	'http://static.ddmcdn.com/en-us/apltv/img/body-bg-2.jpg'
+	},
+	{
 		'title': 	'TLC',
 		'desc':		'TLC TV network opens doors to extraordinary lives.',
 		'id':		'tlc',
@@ -91,19 +98,33 @@ def MainMenu():
 	
 	# Add all channels
 	for channel in CHANNELS:
-		oc.add(
-			DirectoryObject(
-				key = Callback(
-						ShowsChoice, 
-						title = channel["title"], 
-						url = channel["url"],
-						id = channel["id"],
-						thumb = channel["thumb"]), 
-				title = channel["title"],
-				summary = channel["desc"],
-				thumb = channel["thumb"]
+		if channel["title"] == 'Animal Planet LIVE':
+			oc.add(
+				DirectoryObject(
+					key = Callback(
+							LiveStreams, 
+							title = channel["title"], 
+							url = channel["url"],
+							thumb = channel["thumb"]), 
+					title = channel["title"],
+					summary = channel["desc"],
+					thumb = channel["thumb"]
+				)
 			)
-		)		
+		else:
+			oc.add(
+				DirectoryObject(
+					key = Callback(
+							ShowsChoice, 
+							title = channel["title"], 
+							url = channel["url"],
+							id = channel["id"],
+							thumb = channel["thumb"]), 
+					title = channel["title"],
+					summary = channel["desc"],
+					thumb = channel["thumb"]
+				)
+			)		
 	
 	# Add preferences
 	oc.add(PrefsObject(title = "Settings..."))
@@ -410,6 +431,39 @@ def Videos(title, base_url, url, serviceURI, thumb, episodeReq, page = 0):
 		
 	return oc
 
+##########################################################################################
+@route("/video/discovery/LiveStreams")
+def LiveStreams(title, url, thumb):
+	oc            = ObjectContainer(title1 = title)
+	oc.view_group = "InfoList"
+	
+	pageElement = HTML.ElementFromURL(url)
+
+	for item in pageElement.xpath("//div[contains(@class, 'slider')]//div"):
+		test = item.xpath(".//td")
+			
+		video        = {}			
+		video["url"] = item.xpath(".//a/@href")[0]
+		
+		try:
+			video["img"] = item.xpath(".//a//img/@src")[0]
+		except:
+			video["img"] = None
+			
+		try:
+			video["name"] = item.xpath(".//h3/text()")[0]
+		except:
+			video["name"] = None
+
+		oc.add(
+			EpisodeObject(
+				url = video["url"],
+				title = video["name"],
+				thumb = video["img"]
+			)
+		)		
+		
+	return oc
 
 ##########################################################################################
 def GetTotalEpisodes(pageElement):

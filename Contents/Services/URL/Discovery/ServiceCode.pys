@@ -58,13 +58,6 @@ def MediaObjectsForURL(url):
 	url = url.rsplit('?')[0]
 
 	if 'apl.tv' in url:
-		pageElement = HTML.ElementFromURL(url)
-
-		videoUStreamURL = pageElement.xpath("//div[contains(@class, 'video-container')]//iframe/@src")[0]
-		videoID         = RE_VIDEO_ID.search(videoUStreamURL).group(0)
-
-		HLSURL = 'http://iphone-streaming.ustream.tv/uhls/%s/streams/live/iphone/playlist.m3u8?appType=11&amp;appVersion=2' % videoID
-
 		mediaObjs.append(
 			MediaObject(
 				container               = 'mpegts',
@@ -72,7 +65,7 @@ def MediaObjectsForURL(url):
 				audio_codec             = AudioCodec.AAC,                 
 				audio_channels          = 2,
 				optimized_for_streaming = True,
-				parts                   = [PartObject(key = HTTPLiveStreamURL(HLSURL))]
+				parts                   = [PartObject(key = HTTPLiveStreamURL(Callback(PlayLive, url = url)))]
 			)
 		)
 		
@@ -200,6 +193,17 @@ def BitrateToResolution(bitrate):
 		return 480
 	else:
 		return 360
+
+####################################################################################################
+def PlayLive(url):
+	pageElement = HTML.ElementFromURL(url)
+
+	videoUStreamURL = pageElement.xpath("//div[contains(@class, 'video-container')]//iframe/@src")[0]
+	videoID         = RE_VIDEO_ID.search(videoUStreamURL).group(0)
+
+	HLSURL = 'http://iphone-streaming.ustream.tv/uhls/%s/streams/live/iphone/playlist.m3u8?appType=11&amp;appVersion=2' % videoID
+
+	return Redirect(HLSURL)
 
 ####################################################################################################
 def PlayHLS(url, resolution):

@@ -1,6 +1,4 @@
-RE_RESOLUTION = Regex('(?<=resolution=)[0-9]+')
-RE_FORMAT     = Regex('(?<=fmt=)[A-Za-z]+')
-RE_VIDEO_ID   = Regex('(?<=embed/)[0-9]+')
+RE_VIDEO_ID = Regex('(?<=embed/)[0-9]+')
 
 ####################################################################################################
 def NormalizeURL(url):
@@ -22,9 +20,6 @@ def MetadataObjectForURL(url):
 				thumb = thumb
 			)
 		else:
-			# Remove possible preference query from URL
-			url = url.rsplit('?')[0]
- 
 			[title, show, summary, duration, thumb, art, id] = GetVideoDetails(url)
 		
 			return EpisodeObject(
@@ -43,19 +38,23 @@ def MetadataObjectForURL(url):
 def MediaObjectsForURL(url):
 	mediaObjs = []
 
-	# Parse possible preference query
-	try:
-		maxSourceResolution = int(RE_RESOLUTION.search(url).group(0))
-	except:
+	if Prefs['qualitypreference'] == "Automatic":
 		maxSourceResolution = None
+	elif Prefs['qualitypreference'] == "High (720p)":
+		maxSourceResolution = 720
+	elif Prefs['qualitypreference'] == "Normal (480p)":
+		maxSourceResolution = 480
+	elif Prefs['qualitypreference'] == "Medium (360p)":
+		maxSourceResolution = 360
+	else:
+		maxSourceResolution = 270
 		
-	try:
-		streamFormat = RE_FORMAT.search(url).group(0)
-	except:
+	if Prefs['streamformat'] == "HLS":
 		streamFormat = None
-	
-	# Remove possible preference query from URL
-	url = url.rsplit('?')[0]
+	elif Prefs['streamformat'] == "FLV/MP4":
+		streamFormat = "flv"
+	else:
+		streamFormat = "all"
 
 	if 'apl.tv' in url:
 		mediaObjs.append(

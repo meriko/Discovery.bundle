@@ -372,30 +372,6 @@ def Videos(title, base_url, url, serviceURI, thumb, episodeReq, page = 0):
 		except:
 			video["duration"] = None
 		
-		if Prefs['qualitypreference'] == "Automatic":
-			pass
-		elif Prefs['qualitypreference'] == "High (720p)":
-			video["url"] = video["url"] + "?resolution=720"
-		elif Prefs['qualitypreference'] == "Normal (480p)":
-			video["url"] = video["url"] + "?resolution=480"
-		elif Prefs['qualitypreference'] == "Medium (360p)":
-			video["url"] = video["url"] + "?resolution=360"
-		else:
-			video["url"] = video["url"] + "?resolution=270"
-		
-		if Prefs['streamformat'] == "HLS":
-			pass
-		else:
-			if Prefs['qualitypreference'] == "Automatic":
-				video["url"] = video["url"] + "?"
-			else:
-				video["url"] = video["url"] + "&"
-				
-			if Prefs['streamformat'] == "FLV/MP4":
-				video["url"] = video["url"] + "fmt=flv"
-			else:
-				video["url"] = video["url"] + "fmt=all"
-		
 		oc.add(
 			EpisodeObject(
 				url = video["url"],

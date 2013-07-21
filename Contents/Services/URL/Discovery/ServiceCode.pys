@@ -38,24 +38,6 @@ def MetadataObjectForURL(url):
 def MediaObjectsForURL(url):
 	mediaObjs = []
 
-	if Prefs['qualitypreference'] == "Automatic":
-		maxSourceResolution = None
-	elif Prefs['qualitypreference'] == "High (720p)":
-		maxSourceResolution = 720
-	elif Prefs['qualitypreference'] == "Normal (480p)":
-		maxSourceResolution = 480
-	elif Prefs['qualitypreference'] == "Medium (360p)":
-		maxSourceResolution = 360
-	else:
-		maxSourceResolution = 270
-		
-	if Prefs['streamformat'] == "HLS":
-		streamFormat = None
-	elif Prefs['streamformat'] == "FLV/MP4":
-		streamFormat = "flv"
-	else:
-		streamFormat = "all"
-
 	if 'apl.tv' in url:
 		mediaObjs.append(
 			MediaObject(
@@ -64,98 +46,44 @@ def MediaObjectsForURL(url):
 				audio_codec             = AudioCodec.AAC,                 
 				audio_channels          = 2,
 				optimized_for_streaming = True,
-				parts                   = [PartObject(key = HTTPLiveStreamURL(Callback(PlayLive, url = url)))]
+				parts                   = [
+					PartObject(
+						key = 
+							HTTPLiveStreamURL(
+								Callback(
+									PlayLive,
+									url = url
+								)
+							)
+					)
+				]
 			)
 		)
 		
 	else:
-		# Add HLS
-		if not streamFormat or streamFormat == "all":
-			mediaObjs.append(
-				HLSMediaObject(url, maxSourceResolution)
+		mediaObjs.append(
+			MediaObject(
+				container               = 'mpegts',
+				video_codec             = VideoCodec.H264,
+				audio_codec             = AudioCodec.AAC,
+				audio_channels          = 2,
+				video_resolution        = '720',
+				optimized_for_streaming = True,
+				parts                   = [
+					PartObject(
+						key = 
+							HTTPLiveStreamURL(
+								Callback(
+									PlayHLS, 
+									url = url
+								)
+							)
+					)
+				]
 			)
-			if maxSourceResolution:
-				for resolution in [720, 480, 360, 270]:
-					if resolution < maxSourceResolution:
-						mediaObjs.append(
-							HLSMediaObject(url, resolution)
-						)
+		)
 
-		# Add MP4 or FLV (we don't know at this time)
-		if streamFormat and streamFormat in ["flv", "all"]:
-			mediaObjs.append(
-				FLVMP4MediaObject(url, maxSourceResolution)
-			)
-			if maxSourceResolution:
-				for resolution in [720, 480, 360]:
-					if resolution < maxSourceResolution:
-						mediaObjs.append(
-							FLVMP4MediaObject(url, resolution)
-						)
-	
 	return mediaObjs
-
-####################################################################################################
-def HLSMediaObject(url, resolution):
-	if resolution:
-		video_resolution = str(resolution)
-	else:
-		video_resolution = None
-	
-	return MediaObject(
-			container               = 'mpegts',
-			video_codec             = VideoCodec.H264,
-			audio_codec             = AudioCodec.AAC,                 
-			audio_channels          = 2,
-			video_resolution        = video_resolution,
-			optimized_for_streaming = True,
-			parts                   = [PartObject(key = HTTPLiveStreamURL(Callback(PlayHLS, url = url, resolution = resolution)))]
-	)
-	
-####################################################################################################
-def FLVMP4MediaObject(url, resolution):
-	if not resolution:
-		resolution = 720
-		
-	return MediaObject(
-			video_codec             = VideoCodec.H264,
-			audio_codec             = AudioCodec.AAC,
-			audio_channels          = 2,
-			video_resolution        = str(resolution),
-			optimized_for_streaming = True,
-			parts                   = [PartObject(key = Callback(PlayFile, url = url, resolution = resolution))]
-    )
-
-####################################################################################################
-def PlayFile(url, resolution):
-	if not resolution:
-		resolution = 720
-		
-	[title, show, summary, duration, thumb, art, id] = GetVideoDetails(url)
-	
-	if id:	
-		xmlElement = XML.ElementFromURL("http://static.discoverymedia.com/videos/components/dsc/%s/smil-service.smil" % id)
-
-		for meta in xmlElement.xpath("//*[contains(name(), 'meta')]"):
-			if meta.xpath(".//@name")[0] == "httpBase":
-				base_url = meta.xpath(".//@content")[0]
-				break
-			
-		diff = 1000000000  # Some huge number 
-		for video in xmlElement.xpath("//*[contains(name(), 'video')]"):
-			bitrate = video.xpath(".//@system-bitrate")[0]
-				
-			newDiff = abs(BitrateToResolution(int(bitrate)) - resolution)
-			if newDiff < diff:
-				source  = "/" + video.xpath(".//@src")[0]
-				diff    = newDiff
-		
-		if 'flv' in source:
-			random_1 = ''.join(RandomChoice(UPPERCASE) for x in range(5))
-			random_2 = ''.join(RandomChoice(UPPERCASE) for x in range(12))
-			source   = source + '?v=2.11.3&fp=MAC%2011,6,602,180&r=' + random_1 + '&g=' + random_2
-				
-		return Redirect(base_url + source)
 	
 ####################################################################################################
 def GetVideoDetails(url):
@@ -185,15 +113,6 @@ def GetVideoDetails(url):
 	]
 
 ####################################################################################################
-def BitrateToResolution(bitrate):
-	if bitrate >= 3000000:
-		return 720
-	elif bitrate >= 1000000:
-		return 480
-	else:
-		return 360
-
-####################################################################################################
 def PlayLive(url):
 	pageElement = HTML.ElementFromURL(url)
 
@@ -205,72 +124,16 @@ def PlayLive(url):
 	return Redirect(HLSURL)
 
 ####################################################################################################
-def PlayHLS(url, resolution):
+@indirect
+def PlayHLS(url):
 	hls_url     = None
 	pageContent = HTTP.Request(url).content
 	for line in pageContent.splitlines():
   		if 'master.m3u8' in line:
   			hls_url = line[line.find("http") : line.rfind('"')]
 			break
-
-	if resolution:
-		HLSStreams = getHLSStreams(hls_url)
-
-		hlsUrl = hls_url     
-		diff   = 1000000000  # Some huge number
-		for stream in HLSStreams:
-			newDiff = abs(stream["resolution"] - resolution)
-			if newDiff < diff:
-				diff   = newDiff
-				hlsUrl = stream["url"]
-
-		newPlaylist = ""  
-		orgPlayList = HTTP.Request(hlsUrl).content
-		path        = hls_url[ : hls_url.find('master.m3u8')]
-		for line in orgPlayList.splitlines():
-			if 'segment' in line:
-				newPlaylist = newPlaylist + path + line + '\n'
-			else:
-				newPlaylist = newPlaylist + line + '\n'   
-			
-		return newPlaylist
-	else:
-		return Redirect(hls_url)
-
-###########################################################
-def getHLSStreams(hlsUrl):
-	streams = []
-	Found   = True  
-
-	try: 
-		pageElement = HTML.ElementFromURL(hlsUrl)
-	except:
-		Found = False
-
-	if Found:
-		streamSpec      = pageElement.xpath("text()")[0]
-		streamSpecLines = streamSpec.splitlines()
-
-		# Parse the m3u8 file to get:
-		# - URL
-		# - Resolution
-		# - Bitrate
-		for line in streamSpecLines:
-			if "BANDWIDTH" in line:
-				bwm = Regex('(?<=BANDWIDTH=)[0-9]+').search(line)
-
-				stream               = {}
-				stream["bitrate"]    = int(bwm.group(0))        
-
-				if "RESOLUTION" in line:
-					rnm                  = Regex('(?<=RESOLUTION=)[0-9]+x[0-9]+').search(line)
-					stream["resolution"] = int(rnm.group(0).split("x")[1])
-				else:
-					stream["resolution"] = 0
-
-			elif "index" in line:
-				if stream["resolution"] > 0:
-					stream["url"] = hlsUrl.replace("master.m3u8", line)
-					streams.append(stream)         
-
-	return streams
+	
+	return IndirectResponse(
+		VideoClipObject,
+		key = HTTPLiveStreamURL(hls_url)
+	)

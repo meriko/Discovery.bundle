@@ -126,9 +126,6 @@ def MainMenu():
 				)
 			)		
 	
-	# Add preferences
-	oc.add(PrefsObject(title = "Settings..."))
-	
 	return oc
 
 ##########################################################################################

@@ -2,138 +2,138 @@ RE_VIDEO_ID = Regex('(?<=embed/)[0-9]+')
 
 ####################################################################################################
 def NormalizeURL(url):
-	return url
+    return url
 
 ####################################################################################################
 def MetadataObjectForURL(url):
-	try:
-		if 'apl.tv' in url:
-			pageElement = HTML.ElementFromURL(url)
-			
-			title   = pageElement.xpath('//meta[@property="og:title"]')[0].get('content')
-			summary = pageElement.xpath('//meta[@name="description"]')[0].get('content')
-			thumb   = pageElement.xpath('//meta[@property="og:image"]')[0].get('content')
-			
-			return EpisodeObject(
-				title = title,
-				summary = summary,
-				thumb = thumb
-			)
-		else:
-			[title, show, summary, duration, thumb, art, id] = GetVideoDetails(url)
-		
-			return EpisodeObject(
-				title = title,
-				show = show,
-				summary = summary,
-				duration = duration,
-				thumb = thumb,
-				art = art
-			)
-		
-	except:
-		return None
+    try:
+        if 'apl.tv' in url:
+            pageElement = HTML.ElementFromURL(url)
+            
+            title   = pageElement.xpath('//meta[@property="og:title"]')[0].get('content')
+            summary = pageElement.xpath('//meta[@name="description"]')[0].get('content')
+            thumb   = pageElement.xpath('//meta[@property="og:image"]')[0].get('content')
+            
+            return EpisodeObject(
+                title = title,
+                summary = summary,
+                thumb = thumb
+            )
+        else:
+            [title, show, summary, duration, thumb, art, id] = GetVideoDetails(url)
+        
+            return EpisodeObject(
+                title = title,
+                show = show,
+                summary = summary,
+                duration = duration,
+                thumb = thumb,
+                art = art
+            )
+        
+    except:
+        return None
 
 ####################################################################################################
 def MediaObjectsForURL(url):
-	mediaObjs = []
+    mediaObjs = []
 
-	if 'apl.tv' in url:
-		mediaObjs.append(
-			MediaObject(
-				container               = 'mpegts',
-				video_codec             = VideoCodec.H264,
-				audio_codec             = AudioCodec.AAC,                 
-				audio_channels          = 2,
-				optimized_for_streaming = True,
-				parts                   = [
-					PartObject(
-						key = 
-							HTTPLiveStreamURL(
-								Callback(
-									PlayLive,
-									url = url
-								)
-							)
-					)
-				]
-			)
-		)
-		
-	else:
-		mediaObjs.append(
-			MediaObject(
-				container               = 'mpegts',
-				video_codec             = VideoCodec.H264,
-				audio_codec             = AudioCodec.AAC,
-				audio_channels          = 2,
-				video_resolution        = '720',
-				optimized_for_streaming = True,
-				parts                   = [
-					PartObject(
-						key = 
-							HTTPLiveStreamURL(
-								Callback(
-									PlayHLS, 
-									url = url
-								)
-							)
-					)
-				]
-			)
-		)
+    if 'apl.tv' in url:
+        mediaObjs.append(
+            MediaObject(
+                container               = 'mpegts',
+                video_codec             = VideoCodec.H264,
+                audio_codec             = AudioCodec.AAC,                 
+                audio_channels          = 2,
+                optimized_for_streaming = True,
+                parts                   = [
+                    PartObject(
+                        key = 
+                            HTTPLiveStreamURL(
+                                Callback(
+                                    PlayLive,
+                                    url = url
+                                )
+                            )
+                    )
+                ]
+            )
+        )
+        
+    else:
+        mediaObjs.append(
+            MediaObject(
+                container               = 'mpegts',
+                video_codec             = VideoCodec.H264,
+                audio_codec             = AudioCodec.AAC,
+                audio_channels          = 2,
+                video_resolution        = '720',
+                optimized_for_streaming = True,
+                parts                   = [
+                    PartObject(
+                        key = 
+                            HTTPLiveStreamURL(
+                                Callback(
+                                    PlayHLS, 
+                                    url = url
+                                )
+                            )
+                    )
+                ]
+            )
+        )
 
-	return mediaObjs
-	
+    return mediaObjs
+    
 ####################################################################################################
 def GetVideoDetails(url):
-	pageContent = HTTP.Request(url).content
-		
-	title   = Regex('.*\"episodeTitle\" *: *\"(.*)\".*', Regex.IGNORECASE|Regex.MULTILINE).search(pageContent).groups()[0]
-	show    = Regex('.*\"programTitle\" *: *\"(.*)\".*', Regex.IGNORECASE|Regex.MULTILINE).search(pageContent).groups()[0]
-	summary = Regex('.*\"videoCaption\" *: *\"(.*)\".*', Regex.IGNORECASE|Regex.MULTILINE).search(pageContent).groups()[0]
-		
-	try:
-		duration = int(Regex('.*\"duration\" *: *([0-9]+).*', Regex.IGNORECASE|Regex.MULTILINE).search(pageContent).groups()[0].strip()) * 1000
-	except:
-		duration = None
-		
-	thumb = Regex('.*\"thumbnailURL\" *: *\"(.*)\".*', Regex.IGNORECASE|Regex.MULTILINE).search(pageContent).groups()[0]
-	art   = Regex('.*\"videoStillURL\" *: *\"(.*)\".*', Regex.IGNORECASE|Regex.MULTILINE).search(pageContent).groups()[0]
-	id    = Regex('.*\"clipRefId\" *: *\"(.*)\".*', Regex.IGNORECASE|Regex.MULTILINE).search(pageContent).groups()[0]
-	
-	return [
-			title,
-			show,
-			summary,
-			duration,
-			thumb,
-			art,
-			id
-	]
+    pageContent = HTTP.Request(url).content
+        
+    title   = Regex('.*\"episodeTitle\" *: *\"(.*)\".*', Regex.IGNORECASE|Regex.MULTILINE).search(pageContent).groups()[0]
+    show    = Regex('.*\"programTitle\" *: *\"(.*)\".*', Regex.IGNORECASE|Regex.MULTILINE).search(pageContent).groups()[0]
+    summary = Regex('.*\"videoCaption\" *: *\"(.*)\".*', Regex.IGNORECASE|Regex.MULTILINE).search(pageContent).groups()[0]
+        
+    try:
+        duration = int(Regex('.*\"duration\" *: *([0-9]+).*', Regex.IGNORECASE|Regex.MULTILINE).search(pageContent).groups()[0].strip()) * 1000
+    except:
+        duration = None
+        
+    thumb = Regex('.*\"thumbnailURL\" *: *\"(.*)\".*', Regex.IGNORECASE|Regex.MULTILINE).search(pageContent).groups()[0]
+    art   = Regex('.*\"videoStillURL\" *: *\"(.*)\".*', Regex.IGNORECASE|Regex.MULTILINE).search(pageContent).groups()[0]
+    id    = Regex('.*\"clipRefId\" *: *\"(.*)\".*', Regex.IGNORECASE|Regex.MULTILINE).search(pageContent).groups()[0]
+    
+    return [
+            title,
+            show,
+            summary,
+            duration,
+            thumb,
+            art,
+            id
+    ]
 
 ####################################################################################################
 def PlayLive(url):
-	pageElement = HTML.ElementFromURL(url)
+    pageElement = HTML.ElementFromURL(url)
 
-	videoUStreamURL = pageElement.xpath("//div[contains(@class, 'video-container')]//iframe/@src")[0]
-	videoID         = RE_VIDEO_ID.search(videoUStreamURL).group(0)
+    videoUStreamURL = pageElement.xpath("//div[contains(@class, 'video-container')]//iframe/@src")[0]
+    videoID         = RE_VIDEO_ID.search(videoUStreamURL).group(0)
 
-	HLSURL = 'http://iphone-streaming.ustream.tv/uhls/%s/streams/live/iphone/playlist.m3u8?appType=11&amp;appVersion=2' % videoID
+    HLSURL = 'http://iphone-streaming.ustream.tv/uhls/%s/streams/live/iphone/playlist.m3u8?appType=11&amp;appVersion=2' % videoID
 
-	return Redirect(HLSURL)
+    return Redirect(HLSURL)
 
 ####################################################################################################
 @indirect
 def PlayHLS(url):
-	hls_url     = None
-	pageContent = HTTP.Request(url).content
-	for line in pageContent.splitlines():
-  		if 'master.m3u8' in line:
-  			hls_url = line[line.find("http") : line.rfind('"')]
-			break
-	
-	return IndirectResponse(
-		VideoClipObject,
-		key = HTTPLiveStreamURL(hls_url)
-	)
+    hls_url     = None
+    pageContent = HTTP.Request(url).content
+    for line in pageContent.splitlines():
+        if 'master.m3u8' in line:
+            hls_url = line[line.find("http") : line.rfind('"')]
+            break
+    
+    return IndirectResponse(
+        VideoClipObject,
+        key = HTTPLiveStreamURL(hls_url)
+    )

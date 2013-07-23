@@ -150,16 +150,16 @@ def GetHLSStreams(url):
             if "RESOLUTION" in line:
                 stream["resolution"] = int(Regex('(?<=RESOLUTION=)[0-9]+x[0-9]+').search(line).group(0).split("x")[1])
             else:
-                # Audio only stream
                 stream["resolution"] = 0
 
         elif ".m3u8" in line:
-            if stream["resolution"] > 0:
-                if not line.startswith("http://"):
-                    stream["url"] = url.replace("master.m3u8", line)
+            if not line.startswith("http://"):
+                path          = url[ : url.rfind('/') + 1]
+                stream["url"] = path + line
                     
-                streams.append(stream)
+            streams.append(stream)
                 
-    sorted_streams = sorted(streams, key = lambda stream: stream["resolution"], reverse = True)        
+    sorted_streams = sorted(streams, key = lambda stream: stream["bitrate"], reverse = True)        
 
     return sorted_streams
+

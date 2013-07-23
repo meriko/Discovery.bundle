@@ -1,5 +1,3 @@
-RE_VIDEO_ID = Regex('(?<=embed/)[0-9]+')
-
 ####################################################################################################
 def NormalizeURL(url):
     return url
@@ -48,13 +46,7 @@ def MediaObjectsForURL(url):
                 optimized_for_streaming = True,
                 parts                   = [
                     PartObject(
-                        key = 
-                            HTTPLiveStreamURL(
-                                Callback(
-                                    PlayLive,
-                                    url = url
-                                )
-                            )
+                        key = HTTPLiveStreamURL(Callback(PlayLive, url = url))
                     )
                 ]
             )
@@ -71,13 +63,7 @@ def MediaObjectsForURL(url):
                 optimized_for_streaming = True,
                 parts                   = [
                     PartObject(
-                        key = 
-                            HTTPLiveStreamURL(
-                                Callback(
-                                    PlayHLS, 
-                                    url = url
-                                )
-                            )
+                        key = HTTPLiveStreamURL(Callback(PlayHLS, url = url))
                     )
                 ]
             )
@@ -113,27 +99,67 @@ def GetVideoDetails(url):
     ]
 
 ####################################################################################################
+@indirect
 def PlayLive(url):
-    pageElement = HTML.ElementFromURL(url)
+    try:
+        pageElement     = HTML.ElementFromURL(url)
+        videoUStreamURL = pageElement.xpath("//div[contains(@class, 'video-container')]//iframe/@src")[0]
+        videoID         = Regex('(?<=embed/)[0-9]+').search(videoUStreamURL).group(0)
+        hlsurl          = 'http://iphone-streaming.ustream.tv/uhls/%s/streams/live/iphone/playlist.m3u8?appType=11&amp;appVersion=2' % videoID
+    except:
+        raise Ex.MediaNotAvailable
+      
+    streams = GetHLSStreams(hlsurl)
 
-    videoUStreamURL = pageElement.xpath("//div[contains(@class, 'video-container')]//iframe/@src")[0]
-    videoID         = RE_VIDEO_ID.search(videoUStreamURL).group(0)
-
-    HLSURL = 'http://iphone-streaming.ustream.tv/uhls/%s/streams/live/iphone/playlist.m3u8?appType=11&amp;appVersion=2' % videoID
-
-    return Redirect(HLSURL)
+    return IndirectResponse(
+        VideoClipObject,
+        key = HTTPLiveStreamURL(streams[0]['url'])
+    )
 
 ####################################################################################################
 @indirect
 def PlayHLS(url):
-    hls_url     = None
-    pageContent = HTTP.Request(url).content
-    for line in pageContent.splitlines():
-        if 'master.m3u8' in line:
-            hls_url = line[line.find("http") : line.rfind('"')]
-            break
-    
+    try:
+        pageContent = HTTP.Request(url).content
+        hlsurl      = Regex('.*"m3u8" *: *"(http.*)".*').search(pageContent).groups()[0]
+    except:
+        raise Ex.MediaNotAvailable
+
+    streams = GetHLSStreams(hlsurl)
+
     return IndirectResponse(
         VideoClipObject,
-        key = HTTPLiveStreamURL(hls_url)
+        key = HTTPLiveStreamURL(streams[0]['url'])
     )
+
+####################################################################################################
+def GetHLSStreams(url):
+    streams = []
+
+    playList = HTTP.Request(url).content
+
+    # Parse the m3u8 file to get:
+    # - URL
+    # - Resolution
+    # - Bitrate
+    for line in playList.splitlines():
+        if "BANDWIDTH" in line:
+            stream            = {}
+            stream["bitrate"] = int(Regex('(?<=BANDWIDTH=)[0-9]+').search(line).group(0))        
+
+            if "RESOLUTION" in line:
+                stream["resolution"] = int(Regex('(?<=RESOLUTION=)[0-9]+x[0-9]+').search(line).group(0).split("x")[1])
+            else:
+                # Audio only stream
+                stream["resolution"] = 0
+
+        elif ".m3u8" in line:
+            if stream["resolution"] > 0:
+                if not line.startswith("http://"):
+                    stream["url"] = url.replace("master.m3u8", line)
+                    
+                streams.append(stream)
+                
+                sorted_streams = sorted(streams, key = lambda stream: stream["resolution"], reverse = True)        
+
+    return sorted_streams

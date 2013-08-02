@@ -133,7 +133,8 @@ def MainMenu():
 def ShowsChoice(title, url, id, thumb):
     oc = ObjectContainer(title1 = title)
     
-    pageElement = HTML.ElementFromURL(url + "/services/taxonomy/" + id + "/?feedGroup=video&filter=fullepisode&num=1")
+    fullEpisodesURL = url + "/services/taxonomy/" + id + "/?feedGroup=video&filter=fullepisode&num=200"
+    pageElement     = HTML.ElementFromURL(fullEpisodesURL)
     
     if GetTotalEpisodes(pageElement) > 0:
         oc.add(
@@ -143,7 +144,8 @@ def ShowsChoice(title, url, id, thumb):
                         title = title,
                         url = url,
                         thumb = thumb,
-                        fullEpisodesOnly = True), 
+                        fullEpisodesOnly = True,
+                        fullEpisodesURL = fullEpisodesURL), 
                 title = "Shows With Full Episodes", 
                 thumb = thumb
             )
@@ -182,7 +184,7 @@ def ShowsChoice(title, url, id, thumb):
     
 ##########################################################################################
 @route("/video/discovery/Shows", fullEpisodesOnly = bool)
-def Shows(title, url, thumb, fullEpisodesOnly):
+def Shows(title, url, thumb, fullEpisodesOnly, fullEpisodesURL = None):
     oc = ObjectContainer(title1 = title)
     
     # Add shows by parsing the site
@@ -191,11 +193,6 @@ def Shows(title, url, thumb, fullEpisodesOnly):
     pageElement = HTML.ElementFromURL(url + "/videos")
     
     for item in pageElement.xpath("//*[@class = 'show-badge']"):
-        containsFullEpisodes = "full-episodes" in item.xpath(".//a/@data-module-name")[0] 
-        
-        if fullEpisodesOnly and not containsFullEpisodes:
-            continue
-
         showUrl = item.xpath(".//a/@href")[0]
         
         if not showUrl:
@@ -216,6 +213,11 @@ def Shows(title, url, thumb, fullEpisodesOnly):
 
         show["img"]  = item.xpath(".//img/@src")[0]
         show["name"] = ExtractNameFromURL(show["url"])
+    
+        if fullEpisodesOnly:
+            fullEpisodesElement = HTML.ElementFromURL(fullEpisodesURL)
+            if not ShowInFullEpisodesList(fullEpisodesElement, show["name"]):
+                continue
         
         if not show["name"] in showNames:
             showNames.append(show["name"])
@@ -450,7 +452,15 @@ def GetTotalEpisodes(pageElement):
                 break
     
     return totalFullEpisodes
-            
+
+##########################################################################################      
+def ShowInFullEpisodesList(pageElement, showName):
+    for item in pageElement.xpath("//ul//li/text()"):
+        if 'title' in item.lower():
+            if showName.lower() in item.lower():
+                return True
+    
+    return False
 
 ##########################################################################################
 def ExtractNameFromURL(url):

@@ -192,8 +192,8 @@ def Shows(title, url, thumb, fullEpisodesOnly, fullEpisodesURL = None):
     showNames   = []
     pageElement = HTML.ElementFromURL(url + "/videos")
     
-    for item in pageElement.xpath("//*[@class = 'show-badge']"):
-        showUrl = item.xpath(".//a/@href")[0]
+    for item in pageElement.xpath("//*[@id='masc']//*[@class='item']//a"):
+        showUrl = item.xpath("./@href")[0]
         
         if not showUrl:
             continue
@@ -210,8 +210,12 @@ def Shows(title, url, thumb, fullEpisodesOnly, fullEpisodesURL = None):
                 showUrl = "/" + showUrl
                 
             show["url"] = url + showUrl
-
-        show["img"]  = item.xpath(".//img/@src")[0]
+            
+        try:
+            show["img"] = item.xpath(".//img/@data-original")[0]
+        except:
+            show["img"] = thumb
+        
         show["name"] = ExtractNameFromURL(show["url"])
     
         if fullEpisodesOnly:

@@ -2,6 +2,7 @@ TITLE = 'Discovery Networks'
 ART   = 'art-default.jpg'
 ICON  = 'icon-default.png'
 
+PREFIX = '/video/discovery'
 ITEMS_PER_PAGE = 50
 
 HTTP_USER_AGENT = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_7_5) AppleWebKit/536.26.17 (KHTML, like Gecko) Version/6.0.2 Safari/536.26.17"
@@ -86,13 +87,13 @@ def Start():
     DirectoryObject.thumb = R(ICON)
     DirectoryObject.art   = R(ART)
     EpisodeObject.thumb   = R(ICON)
-    EpisodeObject.art   = R(ART)
+    EpisodeObject.art     = R(ART)
 
     HTTP.CacheTime             = CACHE_1HOUR
     HTTP.Headers['User-agent'] = HTTP_USER_AGENT
 
 ##########################################################################################
-@handler('/video/discovery', TITLE, art = ART, thumb = ICON)
+@handler(PREFIX, TITLE, art = ART, thumb = ICON)
 def MainMenu():
     oc = ObjectContainer()
     
@@ -129,7 +130,7 @@ def MainMenu():
     return oc
 
 ##########################################################################################
-@route("/video/discovery/ShowsChoice")
+@route(PREFIX + "/ShowsChoice")
 def ShowsChoice(title, url, id, thumb):
     oc = ObjectContainer(title1 = title)
     
@@ -183,7 +184,7 @@ def ShowsChoice(title, url, id, thumb):
     return oc
     
 ##########################################################################################
-@route("/video/discovery/Shows", fullEpisodesOnly = bool)
+@route(PREFIX + "/Shows", fullEpisodesOnly = bool)
 def Shows(title, url, thumb, fullEpisodesOnly, fullEpisodesURL = None):
     oc = ObjectContainer(title1 = title)
     
@@ -249,7 +250,7 @@ def Shows(title, url, thumb, fullEpisodesOnly, fullEpisodesURL = None):
     return oc
 
 ##########################################################################################
-@route("/video/discovery/VideosChoice")
+@route(PREFIX + "/VideosChoice")
 def VideosChoice(title, base_url, url, thumb):
     oc = ObjectContainer(title1 = title)
     
@@ -318,7 +319,7 @@ def VideosChoice(title, base_url, url, thumb):
                 episodeReq = False)
 
 ##########################################################################################
-@route("/video/discovery/Videos", episodeReq = bool, page = int)
+@route(PREFIX + "/Videos", episodeReq = bool, page = int)
 def Videos(title, base_url, url, serviceURI, thumb, episodeReq, page = 0):
     oc            = ObjectContainer(title1 = title)
     oc.view_group = "InfoList"
@@ -411,7 +412,7 @@ def Videos(title, base_url, url, serviceURI, thumb, episodeReq, page = 0):
     return oc
 
 ##########################################################################################
-@route("/video/discovery/LiveStreams")
+@route(PREFIX + "/LiveStreams")
 def LiveStreams(title, url, thumb):
     oc            = ObjectContainer(title1 = title)
     oc.view_group = "InfoList"

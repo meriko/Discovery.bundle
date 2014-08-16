@@ -285,21 +285,6 @@ def VideosChoice(title, base_url, url, thumb):
                         title = title,
                         base_url = base_url, 
                         url = url,
-                        serviceURI = serviceURI, 
-                        thumb = thumb,
-                        episodeReq = True), 
-                title = "Full Episodes", 
-                thumb = thumb
-            )
-        )               
-
-        oc.add(
-            DirectoryObject(
-                key = Callback(
-                        Videos, 
-                        title = title,
-                        base_url = base_url, 
-                        url = url,
                         serviceURI = serviceURI,
                         thumb = thumb,
                         episodeReq = False), 
@@ -307,6 +292,18 @@ def VideosChoice(title, base_url, url, thumb):
                 thumb = thumb
             )
         )
+
+        episode_oc = Videos(
+            title = title,
+            base_url = base_url, 
+            url = url,
+            serviceURI = serviceURI, 
+            thumb = thumb,
+            episodeReq = True        
+        )
+        
+        for episode in episode_oc.objects:
+            oc.add(episode)
         
         return oc
     else:

@@ -44,25 +44,11 @@ CHANNELS = [
         'thumb':    'http://static.ddmcdn.com/en-us/ids//images/default-still.jpg'
     },
     {
-        'title':    'Science Channel',
-        'desc':     'Science Channel video and news explores wormholes, outer space, engineering, cutting-edge tech, and the latest on your favorite SCI programs!',
-        'id':       'science',
-        'url':      'http://science.discovery.com',
-        'thumb':    'http://static.ddmcdn.com/en-us/sci//images/default-still.jpg'
-    },
-    {
         'title':    'Destination America',
         'desc':     'Destination America.',
         'id':       'dam',
         'url':      'http://america.discovery.com',
         'thumb':    'http://static.ddmcdn.com/en-us/dam//images/default-still.jpg'
-    },
-    {
-        'title':    'Military Channel',
-        'desc':     'Every weapon, war, soldier and branch of U.S. Defense has a story to be heard. Watch Military Channel video to meet the soldiers and hear the stories.',
-        'id':       'military',
-        'url':      'http://military.discovery.com',
-        'thumb':    'http://static.ddmcdn.com/en-us/mil//images/default-still.jpg'
     },
     {
         'title':    'Velocity',
@@ -130,12 +116,68 @@ def MainMenu():
     return oc
 
 ##########################################################################################
+@route(PREFIX + "/Episodes")
+def Episodes(url, thumb, title):
+    oc = ObjectContainer(title2 = title)   
+    
+    pageElement = HTML.ElementFromURL(url + "/videos")
+    
+    for item in pageElement.xpath("//*[@data-item-index]"):
+        try:
+            fullEpisode = item.xpath(".//*[contains(@class,'item')]//*[contains(@class,'fullepisode')]")
+            
+            if not len(fullEpisode) > 0:
+                continue
+        except:
+            continue
+        
+        url = item.xpath(".//*[contains(@class,'item')]//a/@href")[0].strip()
+        title = item.xpath(".//*[contains(@class,'item')]//img/@alt")[0].strip()
+        
+        try:
+            thumb = item.xpath(".//*[contains(@class,'item')]//img/@data-desktop-src")[0].strip()
+        except:
+            thumb = R(ICON)
+            
+        try:
+            show = item.xpath(".//*[contains(@class,'item')]//*[contains(@class,'show-title')]/text()")[0].strip()
+        except:
+            show = None
+            
+        try:
+            summary = item.xpath(".//*[contains(@class,'item')]//*[contains(@class,'global-description')]/text()")[0].strip()
+        except:
+            summary = None
+            
+        try:
+            durationString = item.xpath(".//*[contains(@class,'item')]//*[contains(@class,'items-count')]/text()")[0]
+            duration = ((int(durationString.split(':')[0]) * 60) + int(durationString.split(':')[1])) * 1000
+        except:
+            duration = None
+            
+        oc.add(
+            EpisodeObject(
+                url = url,
+                title = title,
+                thumb = thumb,
+                show = show,
+                summary = summary,
+                duration = duration
+            )
+        )
+        
+    return oc
+
+##########################################################################################
 @route(PREFIX + "/ShowsChoice")
 def ShowsChoice(title, url, id, thumb):
-    oc = ObjectContainer(title1 = title)
+    oc = ObjectContainer(title2 = title)
     
-    fullEpisodesURL = url + "/services/taxonomy/" + id + "/?feedGroup=video&filter=fullepisode&num=200"
-    pageElement     = HTML.ElementFromURL(fullEpisodesURL)
+    try:
+        fullEpisodesURL = url + "/services/taxonomy/" + id + "/?feedGroup=video&filter=fullepisode&num=200"
+        pageElement     = HTML.ElementFromURL(fullEpisodesURL)
+    except:
+        return Episodes(url = url, thumb = thumb, title = title)
     
     if GetTotalEpisodes(pageElement) > 0:
         oc.add(

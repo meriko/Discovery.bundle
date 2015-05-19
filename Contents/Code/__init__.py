@@ -40,7 +40,7 @@ CHANNELS = [
         'title':    'Investigation Discovery',
         'desc':     'Hollywood crimes, murder and forensic investigations. Investigation Discovery gives you insight into true stories that piece together puzzles of human nature.',
         'id':       'investigation+discovery',
-        'url':      'http://investigation.discovery.com',
+        'url':      'http://investigationdiscovery.com',
         'thumb':    'http://static.ddmcdn.com/en-us/ids//images/default-still.jpg'
     },
     {
@@ -66,7 +66,7 @@ def Start():
 
     # Setup the default attributes for the ObjectContainer
     ObjectContainer.title1     = TITLE
-    ObjectContainer.view_group = "List"
+    ObjectContainer.view_group = "InfoList"
     ObjectContainer.art        = R(ART)
 
     # Setup the default attributes for the other objects
@@ -123,34 +123,34 @@ def Episodes(url, thumb, title):
     pageElement = HTML.ElementFromURL(url + "/videos")
     
     for item in pageElement.xpath("//*[@data-item-index]"):
-        try:
-            fullEpisode = item.xpath(".//*[contains(@class,'item')]//*[contains(@class,'fullepisode')]")
+        if True:
+            fullEpisode = item.xpath("./@data-item-type")[0] == "fullepisode"
             
-            if not len(fullEpisode) > 0:
+            if not fullEpisode:
                 continue
-        except:
+        else:
             continue
         
-        url = item.xpath(".//*[contains(@class,'item')]//a/@href")[0].strip()
-        title = item.xpath(".//*[contains(@class,'item')]//img/@alt")[0].strip()
+        url = item.xpath(".//a/@href")[0].strip() 
+        title = item.xpath(".//img/@alt")[0].strip()
         
         try:
-            thumb = item.xpath(".//*[contains(@class,'item')]//img/@data-desktop-src")[0].strip()
+            thumb = item.xpath(".//img/@src")[0].strip()
         except:
             thumb = R(ICON)
             
         try:
-            show = item.xpath(".//*[contains(@class,'item')]//*[contains(@class,'show-title')]/text()")[0].strip()
+            show = item.xpath(".//*[contains(@class,'show-title')]/text()")[0].strip()
         except:
             show = None
             
         try:
-            summary = item.xpath(".//*[contains(@class,'item')]//*[contains(@class,'global-description')]/text()")[0].strip()
+            summary = item.xpath(".//*[contains(@class,'description')]/text()")[0].strip()
         except:
             summary = None
             
         try:
-            durationString = item.xpath(".//*[contains(@class,'item')]//*[contains(@class,'items-count')]/text()")[0]
+            durationString = item.xpath(".//*[contains(@class,'extra')]/text()")[0].strip()
             duration = ((int(durationString.split(':')[0]) * 60) + int(durationString.split(':')[1])) * 1000
         except:
             duration = None
@@ -165,7 +165,11 @@ def Episodes(url, thumb, title):
                 duration = duration
             )
         )
-        
+    
+    if len(oc) < 1:
+        oc.header = "Sorry"
+        oc.message = "Couldn't find any episodes"
+    
     return oc
 
 ##########################################################################################

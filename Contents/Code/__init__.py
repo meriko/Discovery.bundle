@@ -123,12 +123,12 @@ def Episodes(url, thumb, title):
     pageElement = HTML.ElementFromURL(url + "/videos")
     
     for item in pageElement.xpath("//*[@data-item-index]"):
-        if True:
+        try:
             fullEpisode = item.xpath("./@data-item-type")[0] == "fullepisode"
             
             if not fullEpisode:
                 continue
-        else:
+        except:
             continue
         
         url = item.xpath(".//a/@href")[0].strip() 

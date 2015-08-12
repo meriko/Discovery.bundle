@@ -113,7 +113,7 @@ def Episodes(url, thumb, channel_title):
     
     pageElement = HTML.ElementFromURL(url + "/videos")
     
-    for item in pageElement.xpath("//*[@data-item-index]"):
+    for item in pageElement.xpath("//*[@data-item-type]"):
         try:
             fullEpisode = item.xpath("./@data-item-type")[0] == "fullepisode"
             
@@ -126,7 +126,7 @@ def Episodes(url, thumb, channel_title):
         title = item.xpath(".//*[@class='item-title']/text()")[0].strip()
         
         try:
-            thumb = item.xpath(".//a/@style")[0].split("(")[1].split(")")[0]
+            thumb = item.xpath(".//*[@class='background-image']/@data-background-image")[0]
         except:
             thumb = R(ICON)
             

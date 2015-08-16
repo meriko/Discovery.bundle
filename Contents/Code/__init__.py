@@ -49,6 +49,146 @@ CHANNELS = [
     }
 ]
 
+LIVE_STREAMS = [
+    {
+        'title':    'Live Reef Shark Cam',
+        'subtitle': 'Shark Week',
+        'url':      'http://www.ustream.tv/embed/14812707?v=3&amp;wmode=opaque&amp;autoplay=true&amp;controls=true&amp;showtitle=true',
+        'thumb':    'http://images.contentful.com/uckrvucw5yd6/1HWg97hZlSgUmIyYQqEkQ8/87c1c22fb49700dab99659001912e644/cd_512019.jpg'
+    },
+    {
+        'title':    'EXPLORE.ORG Polar Bear Cam',
+        'subtitle': '',
+        'url':      'http://www.ustream.tv/embed/12434837?v=3&amp;wmode=opaque&amp;autoplay=true&amp;controls=true&amp;showtitle=true',
+        'thumb':    'http://images.contentful.com/uckrvucw5yd6/2it04PIS08yeCYaw0w2owA/01a2fcd0af6c8f43773b5383c770bdd5/on-thin-ice-frozen-planet.jpg'
+    },
+    {
+        'title':    'Rhino Beetle Cam',
+        'subtitle': 'Mini Monsters',
+        'url':      'http://www.ustream.tv/embed/17808452?v=3&amp;wmode=opaque&amp;autoplay=true&amp;controls=true&amp;showtitle=true',
+        'thumb':    'http://images.contentful.com/uckrvucw5yd6/2kVcLTsnlOAgaImSEC6IK6/9b494cb89d14774a77641b0a54fda6fa/140009713598514523000201197_RHINO_BEETLE.jpg'
+    },
+    {
+        'title':    'Chipmunk Cam',
+        'subtitle': 'Mini Monsters',
+        'url':      'http://www.ustream.tv/embed/17808553?v=3&amp;wmode=opaque&amp;autoplay=true&amp;controls=true&amp;showtitle=true',
+        'thumb':    'http://images.contentful.com/uckrvucw5yd6/7kRjdpQhDUOSyogAISWsUi/a512287755bd94469c7d155f92123a6d/140009720761014523000401197_CHIPMUNKS_BATTLE.jpg'
+    },
+    {
+        'title':    'Penguin Cam',
+        'subtitle': 'Penguins: Waddle All The Way',
+        'url':      'http://www.ustream.tv/embed/13628076?v=3&amp;wmode=opaque&amp;autoplay=true&amp;controls=true&amp;showtitle=true',
+        'thumb':    'http://images.contentful.com/uckrvucw5yd6/3faYbUKmIocaiMug8Goucg/fde8d29f0113d24662d34336d5dc1fbe/138496259130514245100201197_FeistyFlipperFight.jpg'
+    },
+    {
+        'title':    'Cape Caution Raw',
+        'subtitle': 'Deadliest Catch',
+        'url':      'http://www.ustream.tv/embed/17512744?v=3&amp;wmode=opaque&amp;autoplay=true&amp;controls=true&amp;showtitle=true',
+        'thumb':    'http://images.contentful.com/uckrvucw5yd6/quoyoaVZ4WAqOyKAMaIMC/dda28fc6ed0bcc90ab2334aca1f8fbe1/deadliest-catch-raw-capecaution-hero.jpg'
+    }, 
+    {
+        'title':    'Saga Raw',
+        'subtitle': 'Deadliest Catch',
+        'url':      'http://www.ustream.tv/embed/17512784?v=3&amp;wmode=opaque&amp;autoplay=true&amp;controls=true&amp;showtitle=true',
+        'thumb':    'http://images.contentful.com/uckrvucw5yd6/3kmWCd34cMUeYSg8mA8oiw/26bcea9978589b5b379d8ec4bf7c7583/deadliest-catch-raw-saga-hero.jpg'
+    },
+    {
+        'title':    'Time Bandit Raw',
+        'subtitle': 'Deadliest Catch',
+        'url':      'http://www.ustream.tv/embed/17512790?v=3&amp;wmode=opaque&amp;autoplay=true&amp;controls=true&amp;showtitle=true',
+        'thumb':    'http://images.contentful.com/uckrvucw5yd6/4JIrsoMgxa8QUmys0q6048/d119e09c7ffee4baf6154aef9a17edca/deadliest-catch-raw-timebandit-hero.jpg'
+    },
+    {
+        'title':    'Wizard Raw',
+        'subtitle': 'Deadliest Catch',
+        'url':      'http://www.ustream.tv/embed/17512804?v=3&amp;wmode=opaque&amp;autoplay=true&amp;controls=true&amp;showtitle=true',
+        'thumb':    'http://images.contentful.com/uckrvucw5yd6/fUg7L7VUS4ow0KK8KWy06/003c00afea19768bbc22a451e3938bb0/deadliest-catch-raw-wizard-hero.jpg'
+    },
+    {
+        'title':    'Northwestern Raw',
+        'subtitle': 'Deadliest Catch',
+        'url':      'http://www.ustream.tv/embed/17512776?v=3&amp;wmode=opaque&amp;autoplay=true&amp;controls=true&amp;showtitle=true',
+        'thumb':    'http://images.contentful.com/uckrvucw5yd6/2LxF5F4nxCwMM2OUmiu60Y/079f424d0d54127561500db745b030c9/deadliest-catch-raw-northwestern-hero.jpg'
+    },
+    {
+        'title':    'Cornelia Marie Raw',
+        'subtitle': 'Deadliest Catch',
+        'url':      'http://www.ustream.tv/embed/17512785?v=3&amp;wmode=opaque&amp;autoplay=true&amp;controls=true&amp;showtitle=true',
+        'thumb':    'http://images.contentful.com/uckrvucw5yd6/4yINdvtCQgeiCKqQqceG8S/6ad07181ea417ee94ad14afaa0c4e25e/corneilia-marie-DLIVE.jpg.jpeg'
+    },
+    {
+        'title':    'Sharkageddon Cam',
+        'subtitle': 'Shark Week',
+        'url':      'http://www.ustream.tv/embed/18627730?v=3&amp;wmode=opaque&amp;autoplay=true&amp;controls=true&amp;showtitle=true',
+        'thumb':    'http://images.contentful.com/uckrvucw5yd6/2wSYR86e5SACKo6CiAYEqK/fd48ced77bb6503252029a87266addaa/mm_200182223-001.jpg'
+    },
+    {
+        'title':    'Hammerhead Cam',
+        'subtitle': 'Shark Week',
+        'url':      'http://www.ustream.tv/embed/20710729?v=3&amp;wmode=opaque&amp;autoplay=true&amp;controls=true&amp;showtitle=true',
+        'thumb':    'http://images.contentful.com/uckrvucw5yd6/3j24biFRuoauqkUSgEymIo/d424e8506cb4725b6a0b362151f9ff5c/hammerhead-cam.jpg'
+    },
+    {
+        'title':    "Charlotte & Otto's Woodshed View",
+        'subtitle': 'Alaska: The Last Frontier',
+        'url':      'http://www.ustream.tv/embed/18105029?v=3&amp;wmode=opaque&amp;autoplay=true&amp;controls=true&amp;showtitle=true',
+        'thumb':    'http://images.contentful.com/uckrvucw5yd6/26rKcNAmi0aMaAOOoygAci/d6114d6d2038103662b9b23239d7dd1b/thumb-woodshed-cam.jpg'
+    },
+    {
+        'title':    "Eivin & Eve's Bay View",
+        'subtitle': 'Alaska: The Last Frontier',
+        'url':      'http://www.ustream.tv/embed/18105033?v=3&amp;wmode=opaque&amp;autoplay=true&amp;controls=true&amp;showtitle=true',
+        'thumb':    'http://images.contentful.com/uckrvucw5yd6/6hqA41ATYI0yuQEkS2sYce/cf503c9f686f1d79b7b128fd1d9071e7/thumb-bay-cam.jpg'
+    },
+    {
+        'title':    'Racing Extinction At The Empire State Building',
+        'subtitle': 'Racing Extinction',
+        'url':      'http://www.youtube.com/embed/w91i1X9UgrY?v=3&amp;wmode=opaque&amp;autoplay=true&amp;controls=true&amp;showtitle=true',
+        'thumb':    'http://images.contentful.com/uckrvucw5yd6/2A0BdqhchGyYyUi2u2EaA0/4099675c43ab8bf001e8f3802b4f51a6/racing-extinction-dlive_esb-whale.jpg'
+    },
+    {
+        'title':    "Charlotte & Otto's Yard View",
+        'subtitle': 'Alaska: The Last Frontier',
+        'url':      'http://www.ustream.tv/embed/18105019?v=3&amp;wmode=opaque&amp;autoplay=true&amp;controls=true&amp;showtitle=true',
+        'thumb':    'http://images.contentful.com/uckrvucw5yd6/24MxC51gpa2u6MA2isaYAS/33658c0598a22bc17686e178e3524e02/thumb-yard-cam.jpg'
+    },
+    {
+        'title':    'Jaws Strike Back',
+        'subtitle': 'Shark Week',
+        'url':      'http://www.ustream.tv/embed/18587592?v=3&amp;wmode=opaque&amp;autoplay=true&amp;volume=100&amp;controls=true&amp;showtitle=true',
+        'thumb':    'http://images.contentful.com/uckrvucw5yd6/2ZFzNZjUlGSMmEIqyIS40w/a091c6e641e3f62e1fc979403996e96d/free_mm_offset_60753.jpg'
+    },
+    {
+        'title':    'Mega Shark Cam',
+        'subtitle': 'Shark Week',
+        'url':      'http://www.ustream.tv/embed/18538169?v=3&amp;wmode=opaque&amp;autoplay=true&amp;volume=100&amp;controls=true&amp;showtitle=true',
+        'thumb':    'http://images.contentful.com/uckrvucw5yd6/4zx4Q4wRxYwUm4KwWi4GYo/ac9575568928d1b6099d8c7baf7b7cc1/33662_061.jpg'
+    },
+    {
+        'title':    'Shark Fin Cam',
+        'subtitle': 'Shark Week',
+        'url':      'http://www.ustream.tv/embed/18477618?v=3&amp;wmode=opaque&amp;autoplay=true&amp;volume=100&amp;controls=true&amp;showtitle=true',
+        'thumb':    'http://images.contentful.com/uckrvucw5yd6/Ri6hEYDEIKK8EGaIOSuyY/0fb47b7e4f04301df3fdd2d24af6834b/mm_200362783-001.jpg'
+    },
+    {
+        'title':    'Seal Decoy Cam',
+        'subtitle': 'Shark Week',
+        'url':      'http://www.ustream.tv/embed/18477673?v=3&amp;wmode=opaque&amp;autoplay=true&amp;volume=100&amp;controls=true&amp;showtitle=true',
+        'thumb':    'http://images.contentful.com/uckrvucw5yd6/7znmbXMZ9e0mKoCqg6aiwa/36251ec0c2648a50cd493b90e8a45c7f/17691_MULTIPLE_LEMON_SHARKS.jpg'
+    },
+    {
+        'title':    'Shark Cage Cam',
+        'subtitle': 'Shark Week',
+        'url':      'http://www.ustream.tv/embed/18504828?v=3&amp;wmode=opaque&amp;autoplay=true&amp;volume=100&amp;controls=true&amp;showtitle=true',
+        'thumb':    'http://images.contentful.com/uckrvucw5yd6/42nMSpnMqAc8AwU0QMSms6/b6524d1cb6c0f6e25b6213e912e1f5c4/mm_200296666-001.jpg'
+    },
+    {
+        'title':    'Monster Mako Cams',
+        'subtitle': 'Shark Week',
+        'url':      'http://www.ustream.tv/embed/20710697?v=3&amp;wmode=opaque&amp;autoplay=true&amp;volume=100&amp;controls=true&amp;showtitle=true',
+        'thumb':    'http://images.contentful.com/uckrvucw5yd6/6APw6brG0gkcg0Cgge8MAA/c789b4cb903e17fe0540e7c7cca0484c/monster-mako-cam.jpg'
+    }
+]
 ##########################################################################################
 def Start():
     Plugin.AddViewGroup("List", viewMode="List", mediaType="items")
@@ -103,6 +243,15 @@ def MainMenu():
                     thumb = channel["thumb"]
                 )
             )       
+    
+    oc.add(
+        DirectoryObject(
+            key = Callback(DLive),
+            title = 'DLive',
+            summary = 'Discovery fans can connect 24x7 with their favorite network and tap into an always-on experience featuring the best of our live events, cams, and raw footage!',
+            thumb = 'http://static.ddmcdn.com/en-us/dsc//images/default-still.jpg'
+        )
+    )
     
     return oc
 
@@ -167,7 +316,7 @@ def Episodes(url, thumb, channel_title):
 ##########################################################################################
 @route(PREFIX + "/LiveStreams")
 def LiveStreams(title, url, thumb):
-    oc            = ObjectContainer(title1 = title)
+    oc            = ObjectContainer(title2 = title)
     oc.view_group = "InfoList"
     
     pageElement = HTML.ElementFromURL(url)
@@ -198,3 +347,19 @@ def LiveStreams(title, url, thumb):
         
     return oc
 
+##########################################################################################
+@route(PREFIX + "/DLive")
+def DLive():
+    oc = ObjectContainer(title2 = 'DLive')   
+    
+    for stream in LIVE_STREAMS:
+        oc.add(
+            EpisodeObject(
+                url = stream['url'],
+                title = stream['title'],
+                show = stream['subtitle'],
+                thumb = stream['thumb']
+            )
+        )
+        
+    return oc

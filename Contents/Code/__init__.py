@@ -260,7 +260,10 @@ def MainMenu():
 def Episodes(url, thumb, channel_title):
     oc = ObjectContainer(title2 = channel_title)   
     
-    pageElement = HTML.ElementFromURL(url + "/videos")
+    try:
+        pageElement = HTML.ElementFromURL(url + "/videos/full-episodes/")
+    except:
+        pageElement = HTML.ElementFromURL(url + "/videos")
     
     for item in pageElement.xpath("//*[@data-item-type]"):
         try:

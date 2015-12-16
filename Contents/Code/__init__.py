@@ -34,18 +34,6 @@ CHANNELS = [
         'desc':     'Hollywood crimes, murder and forensic investigations. Investigation Discovery gives you insight into true stories that piece together puzzles of human nature.',
         'url':      'http://investigationdiscovery.com',
         'thumb':    'http://static.ddmcdn.com/en-us/ids//images/default-still.jpg'
-    },
-    {
-        'title':    'Destination America',
-        'desc':     'Destination America.',
-        'url':      'http://america.discovery.com',
-        'thumb':    'http://static.ddmcdn.com/en-us/dam//images/default-still.jpg'
-    },
-    {
-        'title':    'Velocity',
-        'desc':     'Get ready for Velocity!  Velocity brings the best of car programming with diverse new original series and specials.',
-        'url':      'http://velocity.discovery.com',
-        'thumb':    'http://static.ddmcdn.com/en-us/vel//images/default-still.jpg'
     }
 ]
 
@@ -260,10 +248,22 @@ def MainMenu():
 def Episodes(url, thumb, channel_title):
     oc = ObjectContainer(title2 = channel_title)   
     
+    for url in [url + "/videos/full-episodes/", url + "/videos"]:
+        GetEpisodes(url, oc, channel_title)
+    
+    if len(oc) < 1:
+        oc.header = "Sorry"
+        oc.message = "Couldn't find any episodes"
+    
+    return oc
+
+##########################################################################################
+def GetEpisodes(url, oc, channel_title):
+
     try:
-        pageElement = HTML.ElementFromURL(url + "/videos/full-episodes/")
+        pageElement = HTML.ElementFromURL(url)
     except:
-        pageElement = HTML.ElementFromURL(url + "/videos")
+        return
     
     for item in pageElement.xpath("//*[@data-item-type]"):
         try:
@@ -271,6 +271,7 @@ def Episodes(url, thumb, channel_title):
             
             if not fullEpisode:
                 continue
+
         except:
             continue
         
@@ -297,7 +298,7 @@ def Episodes(url, thumb, channel_title):
             duration = ((int(durationString.split(':')[0]) * 60) + int(durationString.split(':')[1])) * 1000
         except:
             duration = None
-            
+        
         oc.add(
             EpisodeObject(
                 url = url,
@@ -309,12 +310,6 @@ def Episodes(url, thumb, channel_title):
                 source_title = channel_title
             )
         )
-    
-    if len(oc) < 1:
-        oc.header = "Sorry"
-        oc.message = "Couldn't find any episodes"
-    
-    return oc
 
 ##########################################################################################
 @route(PREFIX + "/LiveStreams")

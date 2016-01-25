@@ -276,7 +276,7 @@ def GetEpisodes(url, oc, channel_title):
             continue
         
         url = item.xpath(".//a/@href")[0].strip() 
-        title = item.xpath(".//*[@class='item-title']/text()")[0].strip()
+        title = item.xpath(".//*[contains(@class,'item-title')]/text()")[0].strip()
         
         try:
             thumb = item.xpath(".//*[@class='background-image']/@data-background-image")[0]

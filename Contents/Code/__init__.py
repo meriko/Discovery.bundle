@@ -8,13 +8,13 @@ CHANNELS = [
     {
         'title':    'Discovery Channel',
         'desc':     'Science, History, Space, Tech, Sharks, News!',
-        'url':      'http://dsc.discovery.com',
+        'url':      'https://www.discoverygo.com',
         'thumb':    'http://static.ddmcdn.com/en-us/dsc//images/default-still.jpg'
     },
     {
         'title':    'Animal Planet',
         'desc':     'Animal Planet lets you explore cat breeds, dog breeds, wild animals and pets.',
-        'url':      'http://animal.discovery.com',
+        'url':      'https://www.animalplanetgo.com',
         'thumb':    'http://static.ddmcdn.com/en-us/apl//images/default-still.jpg'
     },
     {
@@ -26,14 +26,44 @@ CHANNELS = [
     {
         'title':    'TLC',
         'desc':     'TLC TV network opens doors to extraordinary lives.',
-        'url':      'http://www.tlc.com',
+        'url':      'https://www.tlcgo.com',
         'thumb':    'http://static.ddmcdn.com/en-us/tlc//images/default-still.jpg'
     },
     {
         'title':    'Investigation Discovery',
         'desc':     'Hollywood crimes, murder and forensic investigations. Investigation Discovery gives you insight into true stories that piece together puzzles of human nature.',
-        'url':      'http://investigationdiscovery.com',
+        'url':      'https://www.investigationdiscoverygo.com',
         'thumb':    'http://static.ddmcdn.com/en-us/ids//images/default-still.jpg'
+    },
+    {
+        'title':    'Science Channel',
+        'desc':     'Science Channel video and news explores wormholes, outer space, engineering, cutting-edge tech, and the latest on your favorite SCI programs!',
+        'url':      'https://www.sciencechannelgo.com',
+        'thumb':    'http://static.ddmcdn.com/en-us/sci//images/default-still.jpg'
+    },
+    {
+        'title':    'Destination America',
+        'desc':     'Destination America.',
+        'url':      'https://www.destinationamericago.com',
+        'thumb':    'http://static.ddmcdn.com/en-us/dam//images/default-still.jpg'
+    },
+    {
+        'title':    'American Heroes',
+        'desc':     '',
+        'url':      'https://www.ahctvgo.com',
+        'thumb':    'https://api.discovery.com/v1/images/57460cf16b66d15971c3543c?aspectRatio=original&width=300&height=&key=d06c34d5fa5f5bd74bc83'
+    },
+    {
+        'title':    'Velocity',
+        'desc':     'Get ready for Velocity!  Velocity brings the best of car programming with diverse new original series and specials.',
+        'url':      'https://www.velocitychannelgo.com',
+        'thumb':    'http://static.ddmcdn.com/en-us/vel//images/default-still.jpg'
+    },
+    {
+        'title':    'Life',
+        'desc':     '',
+        'url':      'https://www.velocitychannelgo.com',
+        'thumb':    'https://api.discovery.com/v1/images/5756ff6f6b66d15971c35706?aspectRatio=original&width=300&height=&key=d06c34d5fa5f5bd74bc83'
     }
 ]
 
@@ -204,6 +234,8 @@ def MainMenu():
     # Add all channels
     for channel in CHANNELS:
         if channel["title"] == 'Animal Planet LIVE':
+            pass
+            '''
             oc.add(
                 DirectoryObject(
                     key = Callback(
@@ -217,6 +249,7 @@ def MainMenu():
                     thumb = channel["thumb"]
                 )
             )
+            '''
         else:
             oc.add(
                 DirectoryObject(
@@ -248,8 +281,7 @@ def MainMenu():
 def Episodes(url, thumb, channel_title):
     oc = ObjectContainer(title2 = channel_title)   
     
-    for url in [url + "/videos/full-episodes/", url + "/videos"]:
-        GetEpisodes(url, oc, channel_title)
+    GetEpisodes(url, oc, channel_title)
     
     if len(oc) < 1:
         oc.header = "Sorry"
@@ -265,49 +297,63 @@ def GetEpisodes(url, oc, channel_title):
     except:
         return
     
-    for item in pageElement.xpath("//*[@data-item-type]"):
-        try:
-            fullEpisode = item.xpath("./@data-item-type")[0] == "fullepisode"
-            
-            if not fullEpisode:
-                continue
-
-        except:
+    episodes = []
+    for item in pageElement.xpath("//*[contains(@class, 'episode-item')]"):
+        locked = len(item.xpath(".//*[@class='content-auth']//svg")) > 0
+        
+        if locked:
             continue
+
+        episode_url = url + item.xpath(".//a/@href")[0].strip()
         
-        url = item.xpath(".//a/@href")[0].strip() 
-        title = item.xpath(".//*[contains(@class,'item-title')]/text()")[0].strip()
+        title = item.xpath("./@data-name")[0].strip()
+        
+        if title in episodes:
+            continue
+            
+        episodes.append(title)
         
         try:
-            thumb = item.xpath(".//*[@class='background-image']/@data-background-image")[0]
+            thumb = item.xpath(".//img/@src")[0]
         except:
             thumb = R(ICON)
             
         try:
-            show = item.xpath(".//*[contains(@class,'show')]/text()")[0].strip()
+            show = item.xpath("./@data-show-title")[0].strip()
         except:
             show = None
             
         try:
-            summary = item.xpath(".//*[contains(@class,'description')]/text()")[0].strip()
+            summary = item.xpath("./@data-description")[0].strip()
         except:
             summary = None
             
         try:
-            durationString = item.xpath(".//*[contains(@class,'extra')]/text()")[0].strip()
-            duration = ((int(durationString.split(':')[0]) * 60) + int(durationString.split(':')[1])) * 1000
+            duration = int(item.xpath("./@data-duration")[0].strip()) * 1000
         except:
             duration = None
+            
+        try:
+            index = int(item.xpath("./@data-episode-number")[0].strip())
+        except:
+            index = None
+            
+        try:
+            season = int(item.xpath("./@data-season-number")[0].strip())
+        except:
+            season = None
         
         oc.add(
             EpisodeObject(
-                url = url,
+                url = episode_url,
                 title = title,
                 thumb = thumb,
                 show = show,
                 summary = summary,
                 duration = duration,
-                source_title = channel_title
+                source_title = channel_title,
+                index = index,
+                season = season
             )
         )
 
@@ -324,6 +370,9 @@ def LiveStreams(title, url, thumb):
             
         video        = {}           
         video["url"] = item.xpath(".//a/@href")[0]
+
+        if not '.htm' in video["url"]:
+            continue
         
         try:
             video["img"] = item.xpath(".//a//img/@src")[0]
